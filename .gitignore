@@ -1,0 +1,44 @@
+# gradle
+
+.gradle/
+build/
+out/
+classes/
+
+# eclipse
+
+*.launch
+
+# idea
+
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# vscode
+
+.settings/
+.vscode/
+bin/
+.classpath
+.project
+
+# macos
+
+*.DS_Store
+
+# fabric
+
+run/
+
+# вендорная зависимость TACZ (55 МБ бинарь, не исходный код).
+# для сборки положи tacz-neoforge-1.21.1-1.1.8-hotfix-r1.jar обратно в libs/
+libs/
+
+# java
+
+hs_err_*.log
+replay_*.log
+*.hprof
+*.jfr

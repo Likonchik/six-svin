@@ -1,0 +1,12 @@
+{
+	"required": false,
+	"package": "ru.levin.mixin.tacz",
+	"compatibilityLevel": "JAVA_21",
+	"client": [
+		"MixinCameraSetupEvent",
+		"MixinInteractKeyTextOverlay"
+	],
+	"injectors": {
+		"defaultRequire": 0
+	}
+}

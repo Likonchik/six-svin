@@ -1,0 +1,76 @@
+plugins {
+	id 'java'
+	id 'net.neoforged.moddev' version '2.0.141'
+	id 'io.freefair.lombok' version '8.6'
+}
+
+version = project.mod_version
+group = project.maven_group
+
+base {
+	archivesName = project.archives_base_name
+}
+
+repositories {
+	mavenCentral()
+}
+
+neoForge {
+	version = project.neoforge_version
+
+	// Parchment param-name mappings can be added later via:
+	// parchment { mappingsVersion = '...'; minecraftVersion = '1.21.1' }
+
+	runs {
+		client {
+			client()
+			gameDirectory = file('run')
+		}
+	}
+
+	mods {
+		exosware {
+			sourceSet sourceSets.main
+		}
+	}
+}
+
+dependencies {
+	// SOCKS/proxy codecs (were Loom include(...) on Fabric). On compile classpath...
+	implementation 'io.netty:netty-handler-proxy:4.1.82.Final'
+	implementation 'io.netty:netty-codec-socks:4.1.82.Final'
+
+	// ...and nested into the mod jar via jarJar so they load at runtime. transitive=false: do NOT
+	// bundle netty-codec/transport/buffer/common (Minecraft already ships those; 4.1.x is binary-compatible).
+	// Pin to 4.1.82 exactly: an older netty module is forward-compatible against MC's newer 4.1.x core
+	// (the reverse is not), and this is the version the mod was written and originally shipped against.
+	jarJar(group: 'io.netty', name: 'netty-handler-proxy', version: '[4.1.82.Final]') { transitive = false }
+	jarJar(group: 'io.netty', name: 'netty-codec-socks', version: '[4.1.82.Final]') { transitive = false }
+
+	// TACZ (Timeless and Classics Zero) gun-mod API — COMPILE-ONLY (runtime-optional: NameTags gun-ESP
+	// degrades gracefully via try/catch(NoClassDefFoundError) if TACZ isn't installed). Jar vendored in libs/.
+	compileOnly files('libs/tacz-neoforge-1.21.1-1.1.8-hotfix-r1.jar')
+	// ...also on the dev-run classpath so TACZ actually loads in `runClient` for testing the gun modules.
+	// It self-contains its deps (luaj/simplebedrockmodel/etc via jarJar). NOT bundled into our production jar.
+	runtimeOnly files('libs/tacz-neoforge-1.21.1-1.1.8-hotfix-r1.jar')
+}
+
+java {
+	toolchain.languageVersion = JavaLanguageVersion.of(21)
+	withSourcesJar()
+}
+
+tasks.withType(JavaCompile).configureEach {
+	it.options.release = 21
+	it.options.encoding = 'UTF-8'
+	it.options.compilerArgs.addAll(['-Xmaxerrs', '3000', '-Xmaxwarns', '50'])
+}
+
+// Expand ${mod_version} into the NeoForge mod metadata.
+tasks.named('processResources', ProcessResources).configure {
+	def replaceProperties = [mod_version: project.mod_version, minecraft_version: project.minecraft_version, neoforge_version: project.neoforge_version]
+	inputs.properties replaceProperties
+	filesMatching('META-INF/neoforge.mods.toml') {
+		expand replaceProperties
+	}
+}

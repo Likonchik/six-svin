@@ -1,0 +1,20 @@
+{
+	"required": false,
+	"package": "ru.levin.mixin.tacz",
+	"compatibilityLevel": "JAVA_21",
+	"mixins": [
+		"MixinInaccuracyType"
+	],
+	"client": [
+		"MixinCameraSetupEvent",
+		"MixinInteractKeyTextOverlay",
+		"MixinRenderCrosshairEvent",
+		"MixinGunItemRendererWrapper",
+		"MixinLocalPlayerAim",
+		"MixinFirstPersonRenderGunEvent",
+		"MixinBedrockAttachmentModel"
+	],
+	"injectors": {
+		"defaultRequire": 0
+	}
+}

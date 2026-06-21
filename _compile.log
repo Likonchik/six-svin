@@ -1,0 +1,8 @@
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/8.12.1/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+> Task :createMinecraftArtifacts UP-TO-DATE
+> Task :generateEffectiveLombokConfig UP-TO-DATE
+> Task :compileJava
+
+BUILD SUCCESSFUL in 13s
+3 actionable tasks: 1 executed, 2 up-to-date

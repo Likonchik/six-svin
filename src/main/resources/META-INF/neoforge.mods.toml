@@ -1,0 +1,34 @@
+modLoader = "javafml"
+loaderVersion = "[4,)"
+license = "All Rights Reserved"
+issueTrackerURL = "https://t.me/exosware"
+
+[[mods]]
+modId = "onetap"
+version = "${mod_version}"
+displayName = "OneTap"
+authors = "levin1337, SxdPandora, Nikita / DarkSide"
+description = '''
+OneTap client
+'''
+logoFile = "assets/exosware/icon.png"
+
+[[mixins]]
+config = "exosware.mixins.json"
+
+[[mixins]]
+config = "exosware.tacz.mixins.json"
+
+[[dependencies.onetap]]
+modId = "neoforge"
+type = "required"
+versionRange = "[21.1,)"
+ordering = "NONE"
+side = "CLIENT"
+
+[[dependencies.onetap]]
+modId = "minecraft"
+type = "required"
+versionRange = "[1.21.1,1.22)"
+ordering = "NONE"
+side = "CLIENT"

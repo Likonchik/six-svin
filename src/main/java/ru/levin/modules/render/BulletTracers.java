@@ -1,7 +1,12 @@
 package ru.levin.modules.render;
 
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.projectile.Projectile;
+import net.minecraft.world.level.ClipContext;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import ru.levin.events.Event;
 import ru.levin.events.impl.EventUpdate;
@@ -18,7 +23,9 @@ import java.util.ArrayDeque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 // Трассеры пуль TACZ: показывают траекторию полёта пули. Каждый тик накапливаем позиции всех летящих
@@ -91,7 +98,10 @@ public class BulletTracers extends Function {
                         tr.points.addLast(cur);
                     }
                     while (tr.points.size() > MAX_POINTS) tr.points.removeFirst();
-                    // resolveSegment(...) подключается в Task 2
+                    if (tr.points.size() >= 2) {
+                        Vec3 from = nthFromLast(tr, 1); // предпоследняя точка
+                        resolveSegment(tr, from, cur, e);
+                    }
                 }
                 tr.last = System.currentTimeMillis();
             }
@@ -128,6 +138,63 @@ public class BulletTracers extends Function {
                 // маркер удара подключается в Task 3
             }
         }
+    }
+
+    // получить точку трассы, отстоящую на k от конца (k=0 — последняя, k=1 — предпоследняя)
+    private Vec3 nthFromLast(Trail tr, int k) {
+        int target = tr.points.size() - 1 - k;
+        int i = 0;
+        for (Vec3 p : tr.points) {
+            if (i == target) return p;
+            i++;
+        }
+        return tr.points.getLast();
+    }
+
+    // воспроизводим серверную коллизию на клиенте: блок-клип + перебор сущностей вдоль отрезка.
+    // ближайший удар (сущность ближе блока -> HIT/HEADSHOT, иначе блок -> MISS) обрезает трассу.
+    private void resolveSegment(Trail tr, Vec3 from, Vec3 to, Entity bullet) {
+        // 1) блоки
+        BlockHitResult bhr = mc.level.clip(new ClipContext(from, to,
+                ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, bullet));
+        double dBlock = (bhr.getType() != HitResult.Type.MISS) ? from.distanceToSqr(bhr.getLocation()) : Double.MAX_VALUE;
+
+        // 2) сущности вдоль отрезка, но не дальше блочного удара
+        LivingEntity bestEntity = null;
+        Vec3 bestHit = null;
+        double bestDist = dBlock;
+        AABB segBox = new AABB(from, to).inflate(0.5);
+        List<Entity> near = mc.level.getEntities(bullet, segBox);
+        for (Entity ent : near) {
+            if (!(ent instanceof LivingEntity le)) continue;
+            if (le == mc.player && ownerIsLocal(bullet)) continue; // не цепляем стрелка-себя
+            Optional<Vec3> hit = le.getBoundingBox().inflate(0.3).clip(from, to);
+            if (hit.isEmpty()) continue;
+            double d = from.distanceToSqr(hit.get());
+            if (d < bestDist) {
+                bestDist = d;
+                bestEntity = le;
+                bestHit = hit.get();
+            }
+        }
+
+        if (bestEntity != null) {
+            tr.impact = bestHit;
+            boolean head = bestHit.y > bestEntity.getY() + bestEntity.getBbHeight() * 0.85;
+            tr.state = head ? State.HEADSHOT : State.HIT;
+            replaceLast(tr, bestHit);
+        } else if (dBlock != Double.MAX_VALUE) {
+            tr.impact = bhr.getLocation();
+            tr.state = State.MISS;
+            replaceLast(tr, bhr.getLocation());
+        }
+        // иначе чистый сегмент — остаёмся FLYING
+    }
+
+    // заменить последнюю точку трассы (обрезка ровно в точке удара)
+    private void replaceLast(Trail tr, Vec3 p) {
+        if (!tr.points.isEmpty()) tr.points.removeLast();
+        tr.points.addLast(p);
     }
 
     // ARGB цвета точки трассы: RGB по состоянию (FLYING рисуем как промах), alpha вдоль хвоста по fade

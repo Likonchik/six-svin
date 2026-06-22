@@ -56,6 +56,9 @@ public class GunAimbot extends Function {
             new String[]{"Игроки", "Друзья", "Мобы", "Монстры", "Жители"}
     );
 
+    // не выбирать/не стрелять по игрокам своей scoreboard-команды (союзникам)
+    private final BooleanSetting teamCheck = new BooleanSetting("Не бить команду", true);
+
     private final ModeSetting mode = new ModeSetting("Активация", "Авто", "Авто", "В прицеле");
     private final ModeSetting point = new ModeSetting("Точка", "Голова", "Голова", "Шея", "Тело");
 
@@ -65,6 +68,10 @@ public class GunAimbot extends Function {
     private final SliderSetting predictFactor = new SliderSetting("Сила упреждения", 1.0f, 0f, 2f, 0.05f);
 
     private final BooleanSetting drop = new BooleanSetting("Компенсация дропа", true);
+    // компенсация наследуемой пулей скорости стрелка (solve) — фикс сноса при стрейфе/беге 🟢
+    private final BooleanSetting moveComp = new BooleanSetting("Компенсация движения", true);
+    // занулить разброс собственных пуль аима (MixinKineticBulletSpread) — pinpoint без NoSpread 🔵
+    private final BooleanSetting zeroSpread = new BooleanSetting("Свой разброс = 0", true);
     private final BooleanSetting visibleOnly = new BooleanSetting("Только видимых", false);
     // когда голова за блоком — целиться в ближайшую видимую точку хитбокса. ВЫКЛ по умолчанию: целимся
     // строго в голову (стабильно и точно). Включай, если нужно добивать по торчащему телу из-за угла.
@@ -103,12 +110,17 @@ public class GunAimbot extends Function {
     private float[] lastRot;            // last solved {yaw,pitch} — trigger alignment compares curYaw/curPitch to this
     private boolean firedThisHold = false; // SEMI release gate (mirrors TACZ ShootKey.lastTimeShootSuccess)
     private long alignedSinceMs = 0L;   // for the optional fire delay
+    // выстрел откладывается до flushPendingShot() (вызывается ПОСЛЕ отправки move-пакета с наведённой
+    // ротацией). Иначе shoot-пакет уходит из tick() HEAD раньше move-пакета и сервер берёт ротацию прошлого
+    // тика -> первый выстрел (особенно SEMI/DMR) летит в перекрестие, а не в цель. См. flushPendingShot().
+    private boolean pendingShot = false;
+    private Vec3 lastAimAt = null;      // мировая точка, куда реально наведён аим (с упреждением) — для хитчанса
     private final java.util.ArrayDeque<Vec3> backHistory = new java.util.ArrayDeque<>(); // бэктрек: позиции цели
     private int historyEntityId = -1;
     private final java.util.Random rng = new java.util.Random(); // человечность: микро-джиттер
 
     public GunAimbot() {
-        addSettings(targets, mode, point, sort, sticky, switchFov, fov, range, smooth, predictFactor, drop,
+        addSettings(targets, teamCheck, mode, point, sort, sticky, switchFov, fov, range, smooth, predictFactor, moveComp, drop, zeroSpread,
                 visibleOnly, visiblePart, backtrack, backtrackDelay, humanize, humanGcd,
                 autoFire, fireMode, hitchance, triggerFov, triggerVisibleOnly, triggerDelay,
                 fovCircle, circleColor, hue, saturation, brightness, alpha);
@@ -190,14 +202,21 @@ public class GunAimbot extends Function {
         aiming = false;
         target = null;
         lastRot = null;
+        lastAimAt = null;
         firedThisHold = false;
         alignedSinceMs = 0L;
+        pendingShot = false;
         super.onDisable();
     }
 
     // читается Spinbot: true, когда аим активно крутит серверную ротацию (чтобы не воевать за yaw)
     public boolean isLocked() {
         return aiming;
+    }
+
+    // читается MixinKineticBulletSpread: занулить разброс собственных пуль, пока аим активно целится
+    public boolean wantsZeroSpread() {
+        return state && aiming && zeroSpread.get();
     }
 
     // читается TargetESP: текущая цель аимбота (null, если цели нет)
@@ -277,11 +296,54 @@ public class GunAimbot extends Function {
         return null;
     }
 
+    // сглаженная per-tick скорость цели по backHistory (фронт=текущая); fallback на одну тиковую дельту.
+    // backHistory заполняется recordHistory() каждый тик ДО computeAim(), элемент [k] = позиция k тиков назад.
+    private Vec3 smoothVelocity(LivingEntity t) {
+        if (t.getId() == historyEntityId && backHistory.size() >= 2) {
+            int k = Math.min(3, backHistory.size() - 1);
+            Vec3 now = null, past = null;
+            int i = 0;
+            for (Vec3 v : backHistory) {
+                if (i == 0) now = v;
+                if (i == k) { past = v; break; }
+                i++;
+            }
+            if (now != null && past != null && k > 0) {
+                return new Vec3((now.x - past.x) / k, (now.y - past.y) / k, (now.z - past.z) / k);
+            }
+        }
+        return new Vec3(t.getX() - t.xOld, t.getY() - t.yOld, t.getZ() - t.zOld);
+    }
+
+    // готово ли упреждение к автоогню: окно сглаживания скорости заполнено (>=4 тика истории) ИЛИ цель
+    // практически стоит (лид ~0 при любом шуме). До этого по ДВИЖУЩЕЙСЯ цели автоогонь ждёт — иначе
+    // первые выстрелы уходят с лидом от шумной одно-тиковой интерполяционной скорости (промахи на старте
+    // по бегущей цели). Стоячую цель не задерживаем — по ней лида нет, первый выстрел и так точен.
+    private boolean predictionReady(LivingEntity t) {
+        if (backHistory.size() >= 4) return true;
+        double dx, dz;
+        int span;
+        if (t.getId() == historyEntityId && backHistory.size() >= 2) {
+            Vec3 now = backHistory.getFirst(), past = backHistory.getLast();
+            dx = now.x - past.x;
+            dz = now.z - past.z;
+            span = backHistory.size() - 1;
+        } else {
+            dx = t.getX() - t.xOld;
+            dz = t.getZ() - t.zOld;
+            span = 1;
+        }
+        double perTickSq = (dx * dx + dz * dz) / (double) (span * span);
+        return perTickSq < 2.5e-3; // < ~0.05 бл/тик -> считаем стоячей, стреляем сразу
+    }
+
     private boolean isValidTarget(LivingEntity e) {
         if (e == null || e == mc.player || e.isDeadOrDying() || !e.isAlive()) return false;
         if (e instanceof ArmorStand) return false;
         if (AuraUtil.getDistance(e) > range.get().doubleValue()) return false;
         if (Manager.FUNCTION_MANAGER.antiBot.check(e)) return false;
+        // scoreboard teams: не бить игроков своей команды (союзников)
+        if (teamCheck.get() && mc.player != null && mc.player.isAlliedTo(e)) return false;
 
         if (e instanceof Player) {
             if (!targets.get("Игроки")) return false;
@@ -311,37 +373,44 @@ public class GunAimbot extends Function {
         return new Vec3(c.x, y, c.z);
     }
 
-    // видимая точка прицеливания: голова если видна, иначе ближайшая к голове видимая точка хитбокса;
-    // null — если цель полностью перекрыта блоками. Так аим не «втыкается» в стену, когда видно тело.
+    // видимая точка прицеливания: голова если видна, иначе ближайшая к голове видимая точка тела. Плотный
+    // вертикальный проход голова->ноги (10 уровней) × {центр + 4 серединных края} — ловит и тонкую полоску
+    // тела, торчащую из-за угла. Выбираем видимую точку, ближайшую к голове (макс. урон / естественнее).
+    // null — если цель полностью перекрыта блоками: тогда аим не «втыкается» в стену.
     private Vec3 visibleAimPoint(LivingEntity t) {
         Vec3 head = aimPoint(t);
         if (canSee(head)) return head;
-        net.minecraft.world.phys.AABB box = t.getBoundingBox().deflate(0.05);
-        double[] xs = {box.minX, (box.minX + box.maxX) * 0.5, box.maxX};
-        double[] zs = {box.minZ, (box.minZ + box.maxZ) * 0.5, box.maxZ};
+        net.minecraft.world.phys.AABB box = t.getBoundingBox().deflate(0.08); // инсет от граней: грейзинг + хитрег
+        double cx = (box.minX + box.maxX) * 0.5;
+        double cz = (box.minZ + box.maxZ) * 0.5;
+        // на каждом уровне: центр и 4 серединных края (не углы) — этого хватает на куски тела из-за угла
+        double[][] cols = {
+                {cx, cz}, {box.minX, cz}, {box.maxX, cz}, {cx, box.minZ}, {cx, box.maxZ}
+        };
         Vec3 best = null;
         double bestDist = Double.MAX_VALUE;
-        for (int yi = 0; yi <= 2; yi++) {
-            double y = box.minY + (box.maxY - box.minY) * (yi * 0.5); // ноги / центр / верх
-            for (double xx : xs) {
-                for (double zz : zs) {
-                    Vec3 p = new Vec3(xx, y, zz);
-                    if (!canSee(p)) continue;
-                    double d = p.distanceToSqr(head);
-                    if (d < bestDist) {
-                        bestDist = d;
-                        best = p;
-                    }
+        final int steps = 9;
+        for (int i = 0; i <= steps; i++) {
+            double y = box.maxY - (box.maxY - box.minY) * ((double) i / steps); // сверху (голова) вниз (ноги)
+            for (double[] c : cols) {
+                Vec3 p = new Vec3(c[0], y, c[1]);
+                if (!canSee(p)) continue;
+                double d = p.distanceToSqr(head);
+                if (d < bestDist) {
+                    bestDist = d;
+                    best = p;
                 }
             }
         }
         return best;
     }
 
-    // есть ли прямая видимость (без блоков) от глаз игрока до точки
+    // есть ли прямая видимость (без блоков) от ТОЧКИ ВЫЛЕТА ПУЛИ до точки. Origin = bulletOrigin, а не глаз:
+    // occlusion обязан совпадать с реальной траекторией пули (ствол чуть смещён от камеры), иначе аим может
+    // считать точку видимой, хотя пулю по дороге перекрывает блок (или наоборот).
     private boolean canSee(Vec3 point) {
         if (mc.player == null || mc.level == null) return false;
-        Vec3 eye = mc.player.getEyePosition();
+        Vec3 eye = bulletOrigin(mc.player);
         net.minecraft.world.phys.HitResult hr = mc.level.clip(new net.minecraft.world.level.ClipContext(
                 eye, point,
                 net.minecraft.world.level.ClipContext.Block.COLLIDER,
@@ -350,10 +419,12 @@ public class GunAimbot extends Function {
                 || hr.getLocation().distanceToSqr(point) < 0.1;
     }
 
-    // хитчанс: чиста ли траектория пули (от точки вылета до точки прицеливания) от блоков
+    // хитчанс: чиста ли траектория пули (от точки вылета до РЕАЛЬНО наведённой точки, с упреждением/видимой
+    // частью) от блоков. Используем lastAimAt, а не голову — иначе при visiblePart/упреждении гейт врёт.
     private boolean bulletPathClear(LocalPlayer player) {
         if (target == null) return false;
-        return pathClear(bulletOrigin(player), aimPoint(target));
+        Vec3 to = lastAimAt != null ? lastAimAt : aimPoint(target);
+        return pathClear(bulletOrigin(player), to);
     }
 
     private boolean pathClear(Vec3 from, Vec3 to) {
@@ -389,17 +460,26 @@ public class GunAimbot extends Function {
         Vec3 aimAt = base;
         float[] rot = null;
 
-        // per-tick target velocity (deadzone removes jitter on near-stationary mobs)
-        double vx = t.getX() - t.xOld, vy = t.getY() - t.yOld, vz = t.getZ() - t.zOld;
+        // сглаженная per-tick target velocity (deadzone removes jitter on near-stationary mobs)
+        Vec3 tvel = smoothVelocity(t);
+        double vx = tvel.x, vy = tvel.y, vz = tvel.z;
         if (Math.abs(vx) < 1e-3) vx = 0;
         if (Math.abs(vy) < 1e-3) vy = 0;
         if (Math.abs(vz) < 1e-3) vz = 0;
         double f = bt ? 0.0 : predictFactor.get().doubleValue();
 
+        // скорость стрелка, наследуемая пулей (shootFromRotation): горизонталь всегда, вертикаль только
+        // в воздухе. Её вклад в смещение за n тиков затухает с трением -> множитель S(n), НЕ tof.
+        boolean comp = moveComp.get();
+        Vec3 sv = player.getDeltaMovement();
+        double svx = sv.x, svz = sv.z;
+        double svy = player.onGround() ? 0.0 : sv.y;
+
         // Prediction is always computed and is distance-driven: tof = horiz / horizontalSpeed,
-        // so lead grows automatically with distance. Three passes converge the lead point.
-        for (int i = 0; i < 3; i++) {
+        // so lead grows automatically with distance. Passes converge the lead point.
+        for (int i = 0; i < 5; i++) {
             rot = solve(eye, aimAt, speed, gravity, friction);
+            lastAimAt = aimAt; // точка, относительно которой решён rot — реально наведённая (для хитчанса)
 
             double vh = speed * Math.cos(Math.toRadians(rot[1]));   // real horizontal speed of the shot
             if (vh < 1e-4) vh = 1e-4;
@@ -407,7 +487,13 @@ public class GunAimbot extends Function {
             double horiz = Math.sqrt(dx * dx + dz * dz);
             double tof = tof(horiz, vh, friction);
 
+            // лид цели: цель движется ~линейно tof тиков (множитель tof)
             aimAt = base.add(vx * tof * f, vy * tof * f, vz * tof * f);
+            // компенсация инерции пули от скорости стрелка (множитель S(n))
+            if (comp) {
+                double s = sFactor(friction, tof);
+                aimAt = aimAt.subtract(svx * s, svy * s, svz * s);
+            }
         }
         return rot;
     }
@@ -445,6 +531,12 @@ public class GunAimbot extends Function {
             }
         }
         return horiz / vh;
+    }
+
+    // множитель пройденного пути за n тиков при трении f: S(n) = (1-(1-f)^n)/f (прямой, обратный к tof)
+    private double sFactor(double friction, double n) {
+        if (friction > 1e-6) return (1.0 - Math.pow(1.0 - friction, n)) / friction;
+        return n;
     }
 
     // exact downward drop after `n` ticks given TACZ's order (scale(1-f) then add(-g) each tick):
@@ -567,6 +659,9 @@ public class GunAimbot extends Function {
             alignedSinceMs = 0L;
             return;
         }
+        // прогрев упреждения: не стрелять по движущейся цели, пока окно сглаживания скорости не набралось
+        // (иначе первые выстрелы уходят с лидом от шумной одно-тиковой скорости). Стоячую не задерживаем.
+        if (target != null && !predictionReady(target)) return;
         // хитчанс: не стрелять, если пулю по траектории перекрывает блок
         if (hitchance.get() && !bulletPathClear(player)) return;
 
@@ -577,10 +672,10 @@ public class GunAimbot extends Function {
             if (now - alignedSinceMs < delay) return;
         }
 
-        // стреляем каждый тик, пока наведены: реальную скорострельность гейтит сам TACZ (кулдаун по RPM).
-        // Раньше для SEMI стоял гейт «один выстрел на наведение» -> DMR/пистолеты/полуавтоматы делали
-        // ровно один выстрел и замолкали. Теперь они палят с максимальной для них скорострельностью.
-        fireGun();
+        // ставим выстрел в очередь каждый тик, пока наведены: реальную скорострельность гейтит сам TACZ
+        // (кулдаун по RPM). Раньше для SEMI стоял гейт «один выстрел на наведение» -> DMR/пистолеты делали
+        // ровно один выстрел и замолкали. Сам выстрел уходит из flushPendingShot() ПОСЛЕ move-пакета.
+        pendingShot = true;
     }
 
     // "Всегда"-огонь: стреляем, пока в руке оружие и есть патроны; цель/сходимость/LoS не нужны.
@@ -592,7 +687,8 @@ public class GunAimbot extends Function {
         long delay = (long) triggerDelay.get().floatValue();
         long now = System.currentTimeMillis();
         if (delay > 0L && now - alignedSinceMs < delay) return;
-        if (fireGun()) alignedSinceMs = now;
+        pendingShot = true;
+        alignedSinceMs = now;
     }
 
     // converged when the stepped silent-aim rotation (the bytes EventMotion sends) is within the
@@ -632,6 +728,17 @@ public class GunAimbot extends Function {
         } catch (Throwable ignored) {
             return false;
         }
+    }
+
+    // Вызывается из MixinClientPlayerEntity ПОСЛЕ отправки move-пакета (afterSendMovementPackets): к этому
+    // моменту наведённая ротация (curYaw/curPitch) уже ушла на сервер ЭТИМ ЖЕ тиком через EventMotion,
+    // поэтому сервер разрешит shoot-пакет относительно НАВЕДЁННОЙ ротации, а не прошлого тика. Это чинит
+    // «аим наводится, но пуля летит в перекрестие» — особенно первый выстрел SEMI/DMR.
+    public void flushPendingShot() {
+        if (!pendingShot) return;
+        pendingShot = false;
+        if (!state || mc.player == null) return;
+        fireGun();
     }
 
     // fires exactly one shot via TACZ's self-gating client operator; true iff accepted (SUCCESS)

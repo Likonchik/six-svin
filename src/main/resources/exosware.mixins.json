@@ -15,6 +15,7 @@
 		"display.MixinBackgroundRenderer",
 		"display.MixinGameRenderer",
 		"display.MixinScreenshot",
+		"display.MixinScreen",
 		"display.MixinCamera",
 		"display.MixinInGameOverlayRenderer",
 		"display.MixinHandledScreen",

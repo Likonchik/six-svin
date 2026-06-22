@@ -13,7 +13,7 @@ import ru.levin.modules.setting.SliderSetting;
 import java.awt.*;
 import java.util.Arrays;
 
-@FunctionAnnotation(name = "ClickGUI" ,desc  = "Управление/Кастомизация GUI", type = Type.Render, key = GLFW.GLFW_KEY_RIGHT_SHIFT)
+@FunctionAnnotation(name = "ClickGUI" ,desc  = "Управление/Кастомизация GUI", type = Type.Render, key = GLFW.GLFW_KEY_MINUS)
 public class ClickGUI extends Function {
     public final ModeSetting colorGUI = new ModeSetting("Тема","Светло-чёрная","Светло-чёрная","Тёмная");
 

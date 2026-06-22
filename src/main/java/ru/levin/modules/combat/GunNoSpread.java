@@ -11,6 +11,7 @@ import ru.levin.modules.FunctionAnnotation;
 import ru.levin.modules.Type;
 import ru.levin.modules.setting.BooleanSetting;
 import ru.levin.modules.setting.ModeSetting;
+import ru.levin.modules.setting.SliderSetting;
 
 // TACZ NoSpread. The server picks the shoot inaccuracy purely server-side in
 // InaccuracyType.getInaccuracyType(LivingEntity): it returns AIM (~0.15, ~33x tighter than STAND's
@@ -29,9 +30,12 @@ import ru.levin.modules.setting.ModeSetting;
 @FunctionAnnotation(name = "GunNoSpread", keywords = {"NoSpread", "Разброс", "Стволы"}, desc = "Убирает разброс оружия TACZ", type = Type.Combat)
 public class GunNoSpread extends Function {
 
-    private final ModeSetting mode = new ModeSetting("Режим", "Инстант", "Инстант", "Легит");
+    // "Пинпоинт" 🔵 — разброс пули в 0 (MixinKineticBulletSpread, свой хост); "Инстант" 🔵 — форс типа AIM
+    // (MixinInaccuracyType, свой хост); "Легит" 🟢 — реальный aim-пакет (работает и на удалённом сервере).
+    private final ModeSetting mode = new ModeSetting("Режим", "Инстант", "Пинпоинт", "Инстант", "Легит");
     private final BooleanSetting hiddenAds = new BooleanSetting("Скрытый ADS", true, () -> mode.is("Легит"));
     private final BooleanSetting compSlow = new BooleanSetting("Компенсация замедления", false, () -> mode.is("Легит"));
+    private final SliderSetting aimInterval = new SliderSetting("Интервал aim, тики", 20, 1, 100, 1, () -> mode.is("Легит"));
 
     // TACZ's aiming MOVEMENT_SPEED penalty modifier id — added server-side but SYNCED to the client
     // attribute (MOVEMENT_SPEED is syncable), so stripping it client-side each tick lets the client
@@ -45,12 +49,17 @@ public class GunNoSpread extends Function {
     private net.minecraft.world.item.Item lastGun = null;
 
     public GunNoSpread() {
-        addSettings(mode, hiddenAds, compSlow);
+        addSettings(mode, hiddenAds, compSlow, aimInterval);
     }
 
     // read by MixinInaccuracyType: force AIM inaccuracy without ever aiming (no slow / no FOV)
     public boolean forceAimSpread() {
         return state && mode.is("Инстант");
+    }
+
+    // read by MixinKineticBulletSpread: занулить разброс пули полностью (не только тип AIM). Свой хост.
+    public boolean forcePinpoint() {
+        return state && mode.is("Пинпоинт");
     }
 
     // read by MixinMouseHandler: in "Легит" we force the server aiming state, which TACZ's MouseHandler
@@ -78,7 +87,8 @@ public class GunNoSpread extends Function {
             net.minecraft.world.item.Item gun = mc.player.getMainHandItem().getItem();
             boolean changed = gun != lastGun;
             lastGun = gun;
-            if (!latched || changed || (heartbeat++ % 20 == 0)) {
+            int iv = Math.max(1, (int) aimInterval.get().floatValue());
+            if (!latched || changed || (heartbeat++ % iv == 0)) {
                 sendAim(true);
                 latched = true;
             }

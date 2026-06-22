@@ -19,6 +19,9 @@ config = "exosware.mixins.json"
 [[mixins]]
 config = "exosware.tacz.mixins.json"
 
+[[mixins]]
+config = "exosware.superbwarfare.mixins.json"
+
 [[dependencies.onetap]]
 modId = "neoforge"
 type = "required"

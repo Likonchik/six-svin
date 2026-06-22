@@ -1,0 +1,11 @@
+{
+	"required": false,
+	"package": "ru.levin.mixin.superbwarfare",
+	"compatibilityLevel": "JAVA_21",
+	"client": [
+		"MixinTargetSignal"
+	],
+	"injectors": {
+		"defaultRequire": 0
+	}
+}

@@ -3,7 +3,8 @@
 	"package": "ru.levin.mixin.tacz",
 	"compatibilityLevel": "JAVA_21",
 	"mixins": [
-		"MixinInaccuracyType"
+		"MixinInaccuracyType",
+		"MixinKineticBulletSpread"
 	],
 	"client": [
 		"MixinCameraSetupEvent",

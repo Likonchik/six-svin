@@ -37,17 +37,32 @@ public class ESP extends Function {
     private final BooleanSetting throughWalls = new BooleanSetting("Сквозь стены", true, () -> hitbox.get());
     private final SliderSetting width = new SliderSetting("Толщина линий", 1.5f, 0.5f, 4f, 0.1f);
     private final BooleanSetting outlineModel = new BooleanSetting("Обводка модели", true);
+    // красить ESP игрока в цвет его scoreboard-команды (если у команды задан цвет), иначе цвет темы
+    private final BooleanSetting teamColor = new BooleanSetting("Цвет команды", true);
+    // вообще не рендерить игроков своей scoreboard-команды (союзников)
+    private final BooleanSetting hideTeam = new BooleanSetting("Скрывать свою команду", true);
 
     private static final int FRIEND_COLOR = new Color(85, 255, 85).getRGB();
 
     public ESP() {
         INSTANCE = this;
-        addSettings(targets, hitbox, fill, throughWalls, width, outlineModel);
+        addSettings(targets, hitbox, fill, throughWalls, width, outlineModel, teamColor, hideTeam);
     }
 
     // ===== Цвет темы (общий для хитбокса и обводки) =====
     private static int themeColor(Entity e) {
         if (e instanceof Player p && Manager.FRIEND_MANAGER.isFriend(p.getName().getString())) return FRIEND_COLOR;
+        // цвет scoreboard-команды игрока (если включено и у команды задан цвет) — иначе цвет темы
+        ESP esp = INSTANCE;
+        if (esp != null && esp.teamColor.get() && e instanceof Player) {
+            net.minecraft.world.scores.Team team = e.getTeam();
+            if (team != null) {
+                net.minecraft.ChatFormatting cf = team.getColor();
+                if (cf != null && cf.isColor() && cf.getColor() != null) {
+                    return 0xFF000000 | cf.getColor();
+                }
+            }
+        }
         return ColorUtil.getColorStyle(90);
     }
 
@@ -96,6 +111,8 @@ public class ESP extends Function {
             if (mc.options.getCameraType() == CameraType.FIRST_PERSON) return false;
             return targets.get("Меня");
         }
+        // своя команда: вообще не трекать (скрывать) союзников по scoreboard-команде
+        if (hideTeam.get() && mc.player != null && mc.player.isAlliedTo(entity)) return false;
         if (targets.get("Друзей") && Manager.FRIEND_MANAGER.isFriend(entity.getName().getString())) {
             return true;
         }

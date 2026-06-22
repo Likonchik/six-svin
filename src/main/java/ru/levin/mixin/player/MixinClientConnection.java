@@ -10,6 +10,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import ru.levin.events.Event;
 import ru.levin.events.impl.EventPacket;
 import ru.levin.manager.IMinecraft;
+import ru.levin.modules.misc.AntiScreenshot;
 import ru.levin.util.move.NetworkUtils;
 
 @Mixin(Connection.class)
@@ -26,6 +27,11 @@ public class MixinClientConnection implements IMinecraft {
 
     @Inject(method = "send(Lnet/minecraft/network/protocol/Packet;)V", at = @At("HEAD"), cancellable = true)
     private void onPacketSend(Packet<?> packet, CallbackInfo ci) {
+        // антискринилка: дропаем исходящую утечку кадра (серверные анти-читы шлют JPEG/PNG в custom-payload)
+        if (AntiScreenshot.shouldBlockOutgoing(packet)) {
+            ci.cancel();
+            return;
+        }
         if (NetworkUtils.isSendingSilent()) return;
         EventPacket event = new EventPacket(packet, EventPacket.PacketType.SEND);
         Event.call(event);

@@ -59,10 +59,12 @@ public class NameTags extends Function {
     private final BooleanSetting sphereRender = new BooleanSetting("Показывать Шары/Талисманы", true, () -> tags.get("Игроки"));
     private final BooleanSetting shulkerCheck = new BooleanSetting("Показывать содержимое шалкеров", true, () -> tags.get("Предметы на земле"));
     private final BooleanSetting gunESP = new BooleanSetting("Оружие врагов (TACZ)", true, () -> tags.get("Игроки"));
+    // вообще не показывать нейм-таги игроков своей scoreboard-команды (союзников)
+    private final BooleanSetting hideTeam = new BooleanSetting("Скрывать свою команду", true, () -> tags.get("Игроки"));
     private static final int BG_COLOR = new Color(30, 30, 30, 150).getRGB();
 
     public NameTags() {
-        addSettings(tags, armorRender, effectRender,enchantRender, sphereRender,shulkerCheck, gunESP);
+        addSettings(tags, armorRender, effectRender,enchantRender, sphereRender,shulkerCheck, gunESP, hideTeam);
     }
 
     @Override
@@ -82,6 +84,8 @@ public class NameTags extends Function {
         for (Player player : Manager.SYNC_MANAGER.getPlayers()) {
             if (player == null || (player instanceof LocalPlayer && mc.options.getCameraType().isFirstPerson()))
                 continue;
+            // своя команда: вообще не трекать (скрывать) союзников по scoreboard-команде (кроме себя)
+            if (hideTeam.get() && player != mc.player && mc.player != null && mc.player.isAlliedTo(player)) continue;
 
             Vector3d vec = VectorUtil.toScreen(EntityPosition.get(player, 2.0f, tickDelta));
             if (vec.z < 0 || vec.x < 0 || vec.x > screenW || vec.y < 0 || vec.y > screenH) continue;

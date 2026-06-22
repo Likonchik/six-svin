@@ -68,6 +68,12 @@ public abstract class MixinClientPlayerEntity implements IMinecraft {
         mc.player.setYRot(preYaw);
         mc.player.setXRot(prePitch);
         mc.player.setOnGround(preOnGround);
+
+        // GunAimbot стреляет ИМЕННО здесь: move-пакет с наведённой (silent) ротацией уже ушёл на сервер
+        // этим же тиком, поэтому сервер разрешит выстрел по наведённому углу, а не по ротации прошлого тика.
+        if (Manager.FUNCTION_MANAGER != null && Manager.FUNCTION_MANAGER.gunAimbot != null) {
+            Manager.FUNCTION_MANAGER.gunAimbot.flushPendingShot();
+        }
     }
 
     @Inject(method = "moveTowardsClosestSpace", at = @At("HEAD"), cancellable = true)

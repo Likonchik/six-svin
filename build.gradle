@@ -25,6 +25,8 @@ neoForge {
 		client {
 			client()
 			gameDirectory = file('run')
+			// разрешить установку SecurityManager в рантайме (RobotGuard: антискринилка vs java.awt.Robot)
+			jvmArguments.add('-Djava.security.manager=allow')
 		}
 	}
 

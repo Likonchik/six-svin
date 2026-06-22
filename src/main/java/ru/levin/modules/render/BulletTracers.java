@@ -49,8 +49,20 @@ public class BulletTracers extends Function {
             for (Entity e : mc.level.entitiesForRendering()) {
                 if (!isBullet(e)) continue;
                 alive.add(e.getId());
-                Trail tr = trails.computeIfAbsent(e.getId(), id -> new Trail());
-                tr.points.addLast(new Vec3(e.getX(), e.getY(), e.getZ()));
+                Vec3 cur = new Vec3(e.getX(), e.getY(), e.getZ());
+                Trail tr = trails.get(e.getId());
+                if (tr == null) {
+                    // первая встреча: засеваем позицией прошлого тика (xOld), чтобы даже пуля, прожившая
+                    // 1 тик, дала видимый отрезок, а трасса начиналась у дула, а не на тик позже.
+                    tr = new Trail();
+                    trails.put(e.getId(), tr);
+                    Vec3 prev = new Vec3(e.xOld, e.yOld, e.zOld);
+                    if (prev.distanceToSqr(cur) > 1.0e-9) tr.points.addLast(prev);
+                }
+                // не дублируем совпадающие точки — иначе нулевой сегмент даёт NaN-нормаль в drawLine
+                if (tr.points.isEmpty() || tr.points.getLast().distanceToSqr(cur) > 1.0e-9) {
+                    tr.points.addLast(cur);
+                }
                 while (tr.points.size() > MAX_POINTS) tr.points.removeFirst();
                 tr.last = System.currentTimeMillis();
             }
@@ -72,7 +84,8 @@ public class BulletTracers extends Function {
                 Vec3 prev = null;
                 int i = 0, n = tr.points.size();
                 for (Vec3 p : tr.points) {
-                    if (prev != null) Render3DUtil.drawLine(prev, p, colorAt(i, n), w, depth);
+                    if (prev != null && prev.distanceToSqr(p) > 1.0e-9)
+                        Render3DUtil.drawLine(prev, p, colorAt(i, n), w, depth);
                     prev = p;
                     i++;
                 }

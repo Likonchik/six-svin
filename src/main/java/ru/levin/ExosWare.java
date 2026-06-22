@@ -71,6 +71,7 @@ public final class ExosWare {
 
 	private void setupProtection() {
 		NativeHelper.setProfile();
+		ru.levin.protect.RobotGuard.install(); // generic-блок захвата экрана через java.awt.Robot
 	}
 
 	public void init() {

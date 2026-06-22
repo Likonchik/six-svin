@@ -56,6 +56,7 @@ public class FunctionManager {
     public final GunNoSpread gunNoSpread;
     public final FastAds fastAds;
     public final NoVisualAds noVisualAds;
+    public final NoSway noSway;
     public final AutoExplosion autoExplosion;
     public final Arrows arrows;
     public final CustomCoolDown customCoolDown;
@@ -102,6 +103,7 @@ public class FunctionManager {
                 gunNoSpread = new GunNoSpread(),
                 fastAds = new FastAds(),
                 noVisualAds = new NoVisualAds(),
+                noSway = new NoSway(),
                 new AutoReload(),
                 //Misc
                 unHook = new UnHook(),

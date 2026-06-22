@@ -13,7 +13,10 @@
 		"MixinGunItemRendererWrapper",
 		"MixinLocalPlayerAim",
 		"MixinFirstPersonRenderGunEvent",
-		"MixinBedrockAttachmentModel"
+		"MixinBedrockAttachmentModel",
+		"MixinTickAnimationEvent",
+		"MixinGunRootStabilize",
+		"MixinApplyGunMovements"
 	],
 	"injectors": {
 		"defaultRequire": 0

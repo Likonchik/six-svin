@@ -35,28 +35,28 @@ import java.util.List;
 @FunctionAnnotation(name = "World", desc = "Позволяет менять время суток, погоду и туман", type = Type.Render)
 public class World extends Function {
 
-    private final BooleanSetting timeBox = new BooleanSetting("Изменять время", true);
+    private final BooleanSetting timeBox = new BooleanSetting("Изменять время", true, "Подменять время суток");
     private final ModeSetting timeMode = new ModeSetting(
             timeBox::get,
             "Время суток",
             "День", "День", "Ночь", "Утро", "Восход", "Кастомное"
-    );
+    ).withDesc("Выбор времени суток");
     private final SliderSetting customTime = new SliderSetting(
             "Кастомное время", 6000, 0, 24000, 100,
             () -> timeBox.get() && timeMode.is("Кастомное")
-    );
+    ).withDesc("Своё значение времени");
 
-    private final BooleanSetting weatherBox = new BooleanSetting("Изменять погоду", true);
+    private final BooleanSetting weatherBox = new BooleanSetting("Изменять погоду", true, "Подменять погоду");
     private final ModeSetting weatherMode = new ModeSetting(
             weatherBox::get,
             "Погода",
             "Ясно", "Ясно", "Дождь", "Гроза"
-    );
+    ).withDesc("Выбор погоды");
 
-    public final BooleanSetting fog = new BooleanSetting("Туман", false);
+    public final BooleanSetting fog = new BooleanSetting("Туман", false, "Цветной туман в стиле клиента");
     public final SliderSetting fogEnd = new SliderSetting(
             "Дальность тумана", 200, 0, 500, 1, fog::get
-    );
+    ).withDesc("Дальность тумана");
 
     public World() {
         addSettings(timeBox, timeMode, customTime, weatherBox, weatherMode, fog, fogEnd);
@@ -108,7 +108,12 @@ public class World extends Function {
         }
     }
 
-    private long resolveTime() {
+    // читается MixinLevel: активна ли подмена времени (модуль вкл + тумблер времени)
+    public boolean isTimeOverride() {
+        return state && timeBox.get();
+    }
+
+    public long resolveTime() {
         return switch (timeMode.get()) {
             case "День" -> 1000L;
             case "Ночь" -> 13000L;

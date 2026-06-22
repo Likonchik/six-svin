@@ -14,8 +14,8 @@ import ru.levin.modules.Type;
 
 @FunctionAnnotation(name = "AutoRespawn" ,desc  = "Автоматически респавнит вас при смерти", type = Type.Player)
 public class AutoRespawn extends Function {
-    private BooleanSetting autohome = new BooleanSetting("Автоматически телепортироваться домой",true);
-    private TextSetting home = new TextSetting("Название точки дома","home",() -> autohome.get());
+    private BooleanSetting autohome = new BooleanSetting("Автоматически телепортироваться домой",true,"Телепорт домой после смерти");
+    private TextSetting home = new TextSetting("Название точки дома","home",() -> autohome.get()).withDesc("Имя точки для команды /home");
 
     public AutoRespawn() {
         addSettings(autohome,home);

@@ -29,10 +29,10 @@ public class AutoMessage extends Function {
             "После убийства",
             "Во время таргета",
             "По задержке"
-    );
+    ).withDesc("Когда отправлять сообщение");
     private final SliderSetting timer = new SliderSetting("Задержка", 5000f, 0f, 35000f, 1000f,
-            () -> mode.is("По задержке") || mode.is("Во время таргета") || mode.is("msg(Test)"));
-    private final TextSetting text = new TextSetting("Сообщение", "Привет %target%!");
+            () -> mode.is("По задержке") || mode.is("Во время таргета") || mode.is("msg(Test)")).withDesc("Задержка отправки в мс");
+    private final TextSetting text = new TextSetting("Сообщение", "Привет %target%!").withDesc("Текст сообщения, %target% - ник");
 
     private final TimerUtil delayTimer = new TimerUtil();
     private LivingEntity lastTarget;

@@ -8,7 +8,7 @@ import ru.levin.modules.Type;
 
 @FunctionAnnotation(name = "ItemScroll", desc = "Быстрое перемещение", type = Type.Player)
 public class ItemScroller extends Function {
-    public SliderSetting scroll = new SliderSetting("Задержка", 100f, 1f, 100f,1f);
+    public SliderSetting scroll = new SliderSetting("Задержка", 100f, 1f, 100f,1f).withDesc("Задержка между перемещениями");
 
     public ItemScroller() {
         addSettings(scroll);

@@ -49,8 +49,8 @@ import static ru.levin.util.render.RenderUtil.render3D.drawHoleOutline;
 @SuppressWarnings("All")
 @FunctionAnnotation(name = "Prediction", type = Type.Render, desc = "Рисует линию куда упадёт эндер-жемчюг")
 public class Prediction extends Function {
-    private final BooleanSetting box = new BooleanSetting("Рисовать бокс",false);
-    private final BooleanSetting rect = new BooleanSetting("Рисовать рект под эндер-жемчюгом",false);
+    private final BooleanSetting box = new BooleanSetting("Рисовать бокс",false, "Бокс в точке падения");
+    private final BooleanSetting rect = new BooleanSetting("Рисовать рект под эндер-жемчюгом",false, "Фон под иконкой жемчуга");
     private static final ItemStack ENDER_PEARL_STACK = new ItemStack(Items.ENDER_PEARL);
     private static final Color BOX_COLOR = new Color(255, 255, 255, 255);
     private static final int MAX_STEPS = 150;

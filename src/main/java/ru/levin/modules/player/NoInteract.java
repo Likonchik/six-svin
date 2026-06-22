@@ -8,7 +8,7 @@ import ru.levin.modules.Type;
 
 @FunctionAnnotation(name = "NoInteract", desc = "Не даст вам открыть контейнер по нажатию на ПКМ", type = Type.Player)
 public class NoInteract extends Function {
-    public final BooleanSetting onlyAura = new BooleanSetting("Только с AttackAura",false);
+    public final BooleanSetting onlyAura = new BooleanSetting("Только с AttackAura",false,"Работает только при AttackAura");
 
     public NoInteract() {
         addSettings(onlyAura);

@@ -15,7 +15,7 @@ import java.util.concurrent.atomic.AtomicReference;
 @FunctionAnnotation(name = "AutoAccept",keywords = "TpaAccept", type = Type.Player, desc = "")
 public class AutoAccept extends Function {
 
-    private final BooleanSetting onlyFriend = new BooleanSetting("Только друзей", true);
+    private final BooleanSetting onlyFriend = new BooleanSetting("Только друзей", true, "Принимать тпа только от друзей");
     public AutoAccept() {
         addSettings(onlyFriend);
     }

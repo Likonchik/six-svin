@@ -16,8 +16,8 @@ import ru.levin.modules.setting.BooleanSetting;
 @FunctionAnnotation(name = "NoVisualADS", keywords = {"ADS", "Прицел", "Зум"}, desc = "Скрывает визуал прицела TACZ, оставляя зум", type = Type.Combat)
 public class NoVisualAds extends Function {
 
-    private final BooleanSetting pose = new BooleanSetting("Скрыть поднятие ствола", true);
-    private final BooleanSetting overlay = new BooleanSetting("Скрыть линзу прицела", true);
+    private final BooleanSetting pose = new BooleanSetting("Скрыть поднятие ствола", true, "Оружие не поднимается при прицеле");
+    private final BooleanSetting overlay = new BooleanSetting("Скрыть линзу прицела", true, "Убирает оверлей линзы");
 
     public NoVisualAds() {
         addSettings(pose, overlay);

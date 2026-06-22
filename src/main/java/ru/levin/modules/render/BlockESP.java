@@ -23,13 +23,13 @@ import java.util.Map;
 @FunctionAnnotation(name = "BlockESP", desc = "Показывает сундуки, печки, спавнеры и др.", type = Type.Render)
 public class BlockESP extends Function {
 
-    private final SliderSetting radius = new SliderSetting("Радиус", 20f, 1f, 30f, 1f);
-    private final BooleanSetting chest = new BooleanSetting("Сундуки", true);
-    private final BooleanSetting furnace = new BooleanSetting("Печки", true);
-    private final BooleanSetting spawner = new BooleanSetting("Спавнеры", true);
-    private final BooleanSetting brewingStand = new BooleanSetting("Варочные", true);
-    private final BooleanSetting enderChest = new BooleanSetting("Эндер сундуки", true);
-    private final BooleanSetting detectorRail = new BooleanSetting("Детектор рельс", true);
+    private final SliderSetting radius = new SliderSetting("Радиус", 20f, 1f, 30f, 1f).withDesc("Радиус поиска блоков");
+    private final BooleanSetting chest = new BooleanSetting("Сундуки", true, "Подсветка сундуков");
+    private final BooleanSetting furnace = new BooleanSetting("Печки", true, "Подсветка печей");
+    private final BooleanSetting spawner = new BooleanSetting("Спавнеры", true, "Подсветка спавнеров");
+    private final BooleanSetting brewingStand = new BooleanSetting("Варочные", true, "Подсветка варочных стоек");
+    private final BooleanSetting enderChest = new BooleanSetting("Эндер сундуки", true, "Подсветка эндер-сундуков");
+    private final BooleanSetting detectorRail = new BooleanSetting("Детектор рельс", true, "Подсветка детекторных рельс");
 
     public BlockESP() {
         addSettings(radius, chest, furnace, spawner, brewingStand, enderChest, detectorRail);

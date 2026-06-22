@@ -15,20 +15,20 @@ import java.util.Arrays;
 
 @FunctionAnnotation(name = "ClickGUI" ,desc  = "Управление/Кастомизация GUI", type = Type.Render, key = GLFW.GLFW_KEY_MINUS)
 public class ClickGUI extends Function {
-    public final ModeSetting colorGUI = new ModeSetting("Тема","Светло-чёрная","Светло-чёрная","Тёмная");
+    public final ModeSetting colorGUI = new ModeSetting("Тема","Светло-чёрная","Светло-чёрная","Тёмная").withDesc("Цветовая тема меню");
 
-    public final SliderSetting alpha = new SliderSetting("Прозрачность",200f,120f,255f,1f);
-    public final BooleanSetting blur = new BooleanSetting("Размытие",true);
+    public final SliderSetting alpha = new SliderSetting("Прозрачность",200f,120f,255f,1f).withDesc("Прозрачность фона меню");
+    public final BooleanSetting blur = new BooleanSetting("Размытие",true, "Размытие фона за меню");
     public final MultiSetting blurSetting = new MultiSetting(
             () -> blur.get(),
             "Элементы",
             Arrays.asList("Поиск","Панели"),
             new String[]{"Поиск","Темы", "Панели", "Описание","Создание темы"}
-    );
-    public final BooleanSetting strike = new BooleanSetting("Обводка для модулей",true);
-    public final BooleanSetting filling = new BooleanSetting("Заливка для модулей",true);
-    public final SliderSetting rounding = new SliderSetting("Закругление",4,0,6,1,() -> strike.get() || filling.get());
-    public final SliderSetting alphaModules = new SliderSetting("Прозрачность модулей",20f,10f,40f,1f,() -> strike.get() || filling.get());
+    ).withDesc("Где применять размытие");
+    public final BooleanSetting strike = new BooleanSetting("Обводка для модулей",true, "Обводка кнопок модулей");
+    public final BooleanSetting filling = new BooleanSetting("Заливка для модулей",true, "Заливка активных модулей");
+    public final SliderSetting rounding = new SliderSetting("Закругление",4,0,6,1,() -> strike.get() || filling.get()).withDesc("Закругление углов модулей");
+    public final SliderSetting alphaModules = new SliderSetting("Прозрачность модулей",20f,10f,40f,1f,() -> strike.get() || filling.get()).withDesc("Прозрачность фона модулей");
 
     public ClickGUI() {
         addSettings(colorGUI,alpha,blur,blurSetting,strike,filling,rounding,alphaModules);

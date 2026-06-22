@@ -34,14 +34,14 @@ import java.util.*;
 @FunctionAnnotation(name = "JumpCircles", type = Type.Render, desc = "Красивые круги при прыжке")
 public class JumpCircles extends Function {
 
-    private final ModeSetting circleType = new ModeSetting("Тип круга", "Type-2", "Type-1", "Type-2", "Type-3");
-    private final SliderSetting rotateSpeed = new SliderSetting("Скорость", 0.1f, 0.1f, 5f, 0.1f);
-    private final SliderSetting circleScale = new SliderSetting("Размер", 0.7f, 0.6f, 5f, 0.1f);
+    private final ModeSetting circleType = new ModeSetting("Тип круга", "Type-2", "Type-1", "Type-2", "Type-3").withDesc("Текстура круга");
+    private final SliderSetting rotateSpeed = new SliderSetting("Скорость", 0.1f, 0.1f, 5f, 0.1f).withDesc("Скорость вращения круга");
+    private final SliderSetting circleScale = new SliderSetting("Размер", 0.7f, 0.6f, 5f, 0.1f).withDesc("Размер круга");
     private final MultiSetting targets = new MultiSetting(
             "Отображать у",
             Arrays.asList("Друзей", "Меня"),
             new String[]{"Игроков", "Друзей", "Меня"}
-    );
+    ).withDesc("У кого показывать круги");
 
     private final ResourceLocation CIRCLE_TEXTURE = ResourceLocation.fromNamespaceAndPath("exosware", "images/circles/circle.png");
     private final ResourceLocation CIRCLE2_TEXTURE = ResourceLocation.fromNamespaceAndPath("exosware", "images/circles/circle2.png");

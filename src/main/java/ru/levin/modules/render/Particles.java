@@ -42,7 +42,7 @@ public class Particles extends Function {
             "Типы",
             Arrays.asList("Урон", "Мир"),
             new String[]{"Урон", "Мир"}
-    );
+    ).withDesc("Где показывать частицы");
 
     private final ModeSetting mode = new ModeSetting("Текстура", "Звезда",
             "Корона",
@@ -56,15 +56,15 @@ public class Particles extends Function {
             "Снежинка",
             "Искра",
             "Звезда"
-    );
-    private final SliderSetting countDamage = new SliderSetting("Количество при уроне", 20f, 5f, 50f, 1f,() -> types.get("Урон"));
-    private final SliderSetting countWorld = new SliderSetting("Количество в мире", 12f, 2f, 15f, 1f,() -> types.get("Мир"));
-    private final SliderSetting sizeDamage = new SliderSetting("Размер при уроне", 0.3f, 0.1f, 0.6f, 0.1f,() -> types.get("Урон"));
-    private final SliderSetting sizeWorld = new SliderSetting("Размер в мире", 1.1f, 0.1f, 1.2f, 0.1f,() -> types.get("Мир"));
-    private final SliderSetting sila = new SliderSetting("Сила разброса", 0.2f, 0.1f, 0.5f, 0.1f);
-    private final SliderSetting time = new SliderSetting("Время жизни", 4000f, 500f, 8000f, 100f);
-    private final SliderSetting speedMultiplier = new SliderSetting("Скорость", 1.2f, 0.1f, 3f, 0.1f);
-    private final BooleanSetting randomRotation = new BooleanSetting("Рандомный поворот", true);
+    ).withDesc("Текстура частиц");
+    private final SliderSetting countDamage = new SliderSetting("Количество при уроне", 20f, 5f, 50f, 1f,() -> types.get("Урон")).withDesc("Число частиц при ударе");
+    private final SliderSetting countWorld = new SliderSetting("Количество в мире", 12f, 2f, 15f, 1f,() -> types.get("Мир")).withDesc("Число частиц в мире");
+    private final SliderSetting sizeDamage = new SliderSetting("Размер при уроне", 0.3f, 0.1f, 0.6f, 0.1f,() -> types.get("Урон")).withDesc("Размер частиц при ударе");
+    private final SliderSetting sizeWorld = new SliderSetting("Размер в мире", 1.1f, 0.1f, 1.2f, 0.1f,() -> types.get("Мир")).withDesc("Размер частиц в мире");
+    private final SliderSetting sila = new SliderSetting("Сила разброса", 0.2f, 0.1f, 0.5f, 0.1f).withDesc("Сила разлёта частиц");
+    private final SliderSetting time = new SliderSetting("Время жизни", 4000f, 500f, 8000f, 100f).withDesc("Время жизни частиц");
+    private final SliderSetting speedMultiplier = new SliderSetting("Скорость", 1.2f, 0.1f, 3f, 0.1f).withDesc("Скорость движения частиц");
+    private final BooleanSetting randomRotation = new BooleanSetting("Рандомный поворот", true, "Случайный поворот частиц");
 
 
     private final ArrayList<World> worldParticles = new ArrayList<>();

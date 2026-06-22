@@ -13,7 +13,7 @@ import ru.levin.modules.setting.ModeSetting;
 @FunctionAnnotation(name = "NoSlow", desc = "Предотвращает замедление при использовании предметов", type = Type.Move)
 public class NoSlow extends Function {
 
-    private final ModeSetting mode = new ModeSetting("Режим", "Grim", "Grim","ReallyWorld","LonyGrief");
+    private final ModeSetting mode = new ModeSetting("Режим", "Grim", "Grim","ReallyWorld","LonyGrief").withDesc("Режим обхода замедления");
 
     private int ticks;
 

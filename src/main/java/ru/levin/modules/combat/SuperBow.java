@@ -14,7 +14,7 @@ import ru.levin.modules.Type;
 @FunctionAnnotation(name = "SuperBow", type = Type.Combat,desc = "Увеличивает силу урона от лука")
 public class SuperBow extends Function {
 
-    private final SliderSetting power = new SliderSetting("Сила", 30, 1, 200, 1);
+    private final SliderSetting power = new SliderSetting("Сила", 30, 1, 200, 1).withDesc("Множитель урона лука");
 
     public SuperBow() {
         addSettings(power);

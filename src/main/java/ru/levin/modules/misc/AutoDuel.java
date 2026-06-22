@@ -30,10 +30,10 @@ public class AutoDuel extends Function {
     private final ModeSetting mode = new ModeSetting(
             "Режим",
             "Шары", "Шары","Щит", "Шипы 3", "Незеритка", "Читерский рай", "Лук","Классик","Тотемы","Нодебафф"
-    );
-    private SliderSetting slowTime = new SliderSetting("Скорость отправки",500f,300f,1000f,100f);
-    private final BooleanSetting babki = new BooleanSetting("Играть на деньги", false);
-    private TextSetting money = new TextSetting("Монет", "10000", () -> babki.get());
+    ).withDesc("Выбор набора для дуэли");
+    private SliderSetting slowTime = new SliderSetting("Скорость отправки",500f,300f,1000f,100f).withDesc("Задержка между запросами");
+    private final BooleanSetting babki = new BooleanSetting("Играть на деньги", false, "Дуэль на ставку монет");
+    private TextSetting money = new TextSetting("Монет", "10000", () -> babki.get()).withDesc("Размер ставки");
 
 
 

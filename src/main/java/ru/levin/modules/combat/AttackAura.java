@@ -60,40 +60,40 @@ public class AttackAura extends Function {
             "KoopinAc",
             "LonyGrief",
             "1.8.8"
-    );
+    ).withDesc("Режим ротации ауры");
 
     private final MultiSetting targets = new MultiSetting(
             "Цели",
             Arrays.asList("Игроки", "Голые", "Мобы", "Монстры"),
             new String[]{"Игроки", "Голые", "Друзья", "Мобы", "Монстры", "Жители"}
-    );
+    ).withDesc("Кого атаковать");
 
     private final ModeSetting sort = new ModeSetting("Сортировать",
             "По здоровью",
             "По здоровью",
             "По дистанции",
             "По броне"
-    );
+    ).withDesc("Приоритет выбора цели");
 
     private final MultiSetting setting = new MultiSetting(
             "Настройки",
             Arrays.asList("Только критами", "Ломать щит", "Отжим щита"),
             new String[]{"Только критами", "Ломать щит", "Отжим щита"}
-    );
+    ).withDesc("Дополнительные опции атаки");
 
-    private final SliderSetting distance = new SliderSetting("Радиус атаки", 3.0f, 1.8f, 6f, 0.1f);
-    private final SliderSetting rotateDistance = new SliderSetting("Радиус обнаружения", 5f, 0.0f, 10f, 0.1f);
+    private final SliderSetting distance = new SliderSetting("Радиус атаки", 3.0f, 1.8f, 6f, 0.1f).withDesc("Дистанция удара");
+    private final SliderSetting rotateDistance = new SliderSetting("Радиус обнаружения", 5f, 0.0f, 10f, 0.1f).withDesc("Дистанция наведения");
 
-    private final SliderSetting elytraDistance = new SliderSetting("Радиус на элитрах", 40f, 0f, 80f, 1f);
-    private final SliderSetting snapSpeed = new SliderSetting("Скорость снапов", 150, 50, 300, 50f, () -> mode.is("Snap"));
+    private final SliderSetting elytraDistance = new SliderSetting("Радиус на элитрах", 40f, 0f, 80f, 1f).withDesc("Дистанция при полёте");
+    private final SliderSetting snapSpeed = new SliderSetting("Скорость снапов", 150, 50, 300, 50f, () -> mode.is("Snap")).withDesc("Скорость снапа ротации");
 
-    private final BindBooleanSetting onlySpaceCritical = new BindBooleanSetting("Только с пробелом", false, () -> setting.get("Только критами"));
-    private final BooleanSetting noAttackIfEat = new BooleanSetting("Не бить если ешь", false);
-    private final BooleanSetting raycast = new BooleanSetting("Проверять наведение", false);
+    private final BindBooleanSetting onlySpaceCritical = new BindBooleanSetting("Только с пробелом", false, () -> setting.get("Только критами")).withDesc("Криты только по пробелу");
+    private final BooleanSetting noAttackIfEat = new BooleanSetting("Не бить если ешь", false, "Не атаковать во время еды");
+    private final BooleanSetting raycast = new BooleanSetting("Проверять наведение", false, "Бить только при наведении");
 
-    public final BooleanSetting correction = new BooleanSetting("Коррекция", true);
-    public final ModeSetting correctionType = new ModeSetting(() -> correction.get(), "Тип коррекции", "Free", "Free", "Focus");
-    private final ModeSetting sprintreset = new ModeSetting("Тип спринта", "Rage", "Rage", "Legit", "None");
+    public final BooleanSetting correction = new BooleanSetting("Коррекция", true, "Корректировать движение");
+    public final ModeSetting correctionType = new ModeSetting(() -> correction.get(), "Тип коррекции", "Free", "Free", "Focus").withDesc("Тип коррекции движения");
+    private final ModeSetting sprintreset = new ModeSetting("Тип спринта", "Rage", "Rage", "Legit", "None").withDesc("Способ сброса спринта");
 
     public LivingEntity target = null;
     private long cpsLimit = 0L;

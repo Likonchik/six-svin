@@ -48,15 +48,15 @@ public class CrystalAura extends Function {
             "Настройки",
             List.of("Не взрывать себя", "Коррекция движения", "Игрок в падении", "Подсветка блока"),
             new String[]{"Не взрывать себя", "Коррекция движения", "Игрок в падении", "Подсветка блока"}
-    );
+    ).withDesc("Доп. настройки аура");
 
-    private final ModeSetting distanceMode = new ModeSetting("Тип радиуса", "Свой", "Свой", "Grim");
-    private final SliderSetting customDistance = new SliderSetting("Радиус", 5, 2.5f, 6, 0.05f, () -> distanceMode.is("Свой"));
-    private final SliderSetting breakDelay = new SliderSetting("Задержка", 100, 0, 500, 1);
-    public final BooleanSetting offHandCrystal = new BooleanSetting("Брать крист. в левую руку", true);
-    private final BooleanSetting renderBlock = new BooleanSetting("Подсветка блока", true);
+    private final ModeSetting distanceMode = new ModeSetting("Тип радиуса", "Свой", "Свой", "Grim").withDesc("Способ задать радиус");
+    private final SliderSetting customDistance = new SliderSetting("Радиус", 5, 2.5f, 6, 0.05f, () -> distanceMode.is("Свой")).withDesc("Радиус действия");
+    private final SliderSetting breakDelay = new SliderSetting("Задержка", 100, 0, 500, 1).withDesc("Задержка между действиями");
+    public final BooleanSetting offHandCrystal = new BooleanSetting("Брать крист. в левую руку", true, "Кристалл в левую руку");
+    private final BooleanSetting renderBlock = new BooleanSetting("Подсветка блока", true, "Подсветка блока установки");
     private final BooleanSetting rgCheck = new BooleanSetting("Проверка региона", true, "для гриферских серверов");
-    private final BooleanSetting twoPlace = new BooleanSetting("Ставить в несколько мест", true);
+    private final BooleanSetting twoPlace = new BooleanSetting("Ставить в несколько мест", true, "Несколько кристаллов сразу");
 
     private BlockPos closestObsidian = null;
     public EndCrystal closestCrystal = null;

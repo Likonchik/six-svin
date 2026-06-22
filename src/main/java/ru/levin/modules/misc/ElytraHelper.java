@@ -21,9 +21,9 @@ import ru.levin.util.player.InventoryUtil;
 @FunctionAnnotation(name = "ElytraHelper", desc = "Быстрое взаимодействие с элитрой", type = Type.Misc)
 public class ElytraHelper extends Function {
 
-    private final BindSetting elytraKey = new BindSetting("Кнопка элитры", 0);
-    private final BindSetting fireworkKey = new BindSetting("Кнопка фейерверка", 0);
-    private final BooleanSetting autoTakeoff = new BooleanSetting("Авто-взлёт", true);
+    private final BindSetting elytraKey = new BindSetting("Кнопка элитры", 0).withDesc("Клавиша свапа элитры");
+    private final BindSetting fireworkKey = new BindSetting("Кнопка фейерверка", 0).withDesc("Клавиша использования фейерверка");
+    private final BooleanSetting autoTakeoff = new BooleanSetting("Авто-взлёт", true, "Автоматический взлёт на элитре");
 
     private int takeoffTicks = 0;
     private boolean waitingToGlide = false;

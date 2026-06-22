@@ -39,11 +39,11 @@ import static ru.levin.util.render.RenderUtil.*;
 @SuppressWarnings("All")
 @FunctionAnnotation(name = "TargetESP", desc = "Красивый указатель на вашем противнике", type = Type.Render)
 public class TargetESP extends Function {
-    private final ModeSetting mode = new ModeSetting("Мод","Призраки","Маркер","Маркер2","Призраки","Кружок");
+    private final ModeSetting mode = new ModeSetting("Мод","Призраки","Маркер","Маркер2","Призраки","Кружок").withDesc("Вид указателя на цели");
     // откуда брать цель для указателя: ближний бой (AttackAura) и/или аимбот по стволам (GunAimbot)
     private final MultiSetting source = new MultiSetting("Источник",
             Arrays.asList("AttackAura", "GunAimbot"),
-            new String[]{"AttackAura", "GunAimbot"});
+            new String[]{"AttackAura", "GunAimbot"}).withDesc("Откуда брать цель");
 
     private final float[] SCALE_CACHE = new float[101];
     private final EaseInOutQuad animation = new EaseInOutQuad(800, 1);

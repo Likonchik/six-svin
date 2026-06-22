@@ -11,7 +11,7 @@ import ru.levin.util.move.MoveUtil;
 
 @FunctionAnnotation(name = "WTap", type = Type.Combat, keywords = {"ExtendedAttack","ExtendedKnockBack"}, desc = "Позволяет оттолкнуть противника дальше")
 public class AttackExtend extends Function {
-    private final BooleanSetting onlyOnGround = new BooleanSetting("Только на земле", true);
+    private final BooleanSetting onlyOnGround = new BooleanSetting("Только на земле", true, "Работать только на земле");
 
     public AttackExtend() {
         addSettings(onlyOnGround);

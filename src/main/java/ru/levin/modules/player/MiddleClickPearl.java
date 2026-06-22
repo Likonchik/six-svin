@@ -16,8 +16,8 @@ import ru.levin.util.player.InventoryUtil;
 
 @FunctionAnnotation(name = "MiddleClickPearl",keywords = {"MCP"}, desc = "Откидывание пёрла по колёсику мыши", type = Type.Player)
 public class MiddleClickPearl extends Function {
-    private final ModeSetting mode = new ModeSetting("Тип","Обычный","Обычный","По бинду");
-    private final BindSetting bind = new BindSetting("Кнопка кидания",0,() -> mode.is("По бинду"));
+    private final ModeSetting mode = new ModeSetting("Тип","Обычный","Обычный","По бинду").withDesc("Способ кидания пёрла");
+    private final BindSetting bind = new BindSetting("Кнопка кидания",0,() -> mode.is("По бинду")).withDesc("Клавиша кидания пёрла");
     private final BooleanSetting inventoryUse = new BooleanSetting("Использовать из инвентаря",true,"Не используйте на HollyWorld (баниться)");
 
     public MiddleClickPearl() {

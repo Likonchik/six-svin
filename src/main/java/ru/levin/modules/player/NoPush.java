@@ -13,7 +13,7 @@ public class NoPush extends Function {
             "Типы",
             Arrays.asList("Игроки", "Блоки"),
             new String[]{"Вода", "Игроки", "Блоки"}
-    );
+    ).withDesc("Типы отключаемой коллизии");
     public NoPush() {
         addSettings(mods);
     }

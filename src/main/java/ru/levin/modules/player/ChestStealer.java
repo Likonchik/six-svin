@@ -18,8 +18,8 @@ import java.util.List;
 @FunctionAnnotation(name = "ChestStealer", desc = "", type = Type.Player)
 public class ChestStealer extends Function {
 
-    private final ModeSetting mode = new ModeSetting("Тип", "Обычный", "Обычный", "Умный");
-    private final SliderSetting stealDelay = new SliderSetting("Задержка", 120f, 0f, 1000f, 1f);
+    private final ModeSetting mode = new ModeSetting("Тип", "Обычный", "Обычный", "Умный").withDesc("Режим выбора предметов");
+    private final SliderSetting stealDelay = new SliderSetting("Задержка", 120f, 0f, 1000f, 1f).withDesc("Задержка между кражами в мс");
 
     private final TimerUtil timer = new TimerUtil();
 

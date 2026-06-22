@@ -26,13 +26,13 @@ public class CustomCoolDown extends Function {
             "Задержка",
             Arrays.asList("Золотое яблоко", "Плод хоруса", "Эндер-жемчюг"),
             new String[]{"Золотое яблоко", "Плод хоруса", "Эндер-жемчюг"}
-    );
+    ).withDesc("Предметы для кулдауна");
 
-    private final SliderSetting appleTime = new SliderSetting("Кд золотого яблока", 4.6F, 1.0F, 16.0F, 0.1F, () -> items.get("Золотое яблоко"));
-    private final SliderSetting pearlTime = new SliderSetting("Кд эндер-жемчюгов", 13.5F, 1.0F, 16.0F, 0.1F, () -> items.get("Эндер-жемчюг"));
-    private final SliderSetting horusTime = new SliderSetting("Кд хоруса", 3.5F, 1.0F, 16.0F, 0.1F, () -> items.get("Плод хоруса"));
+    private final SliderSetting appleTime = new SliderSetting("Кд золотого яблока", 4.6F, 1.0F, 16.0F, 0.1F, () -> items.get("Золотое яблоко")).withDesc("Кулдаун золотого яблока");
+    private final SliderSetting pearlTime = new SliderSetting("Кд эндер-жемчюгов", 13.5F, 1.0F, 16.0F, 0.1F, () -> items.get("Эндер-жемчюг")).withDesc("Кулдаун эндер-жемчуга");
+    private final SliderSetting horusTime = new SliderSetting("Кд хоруса", 3.5F, 1.0F, 16.0F, 0.1F, () -> items.get("Плод хоруса")).withDesc("Кулдаун плода хоруса");
 
-    public BooleanSetting PVPonly = new BooleanSetting("Только в PVP режиме", false);
+    public BooleanSetting PVPonly = new BooleanSetting("Только в PVP режиме", false, "Работает только в бою");
 
     public final Map<Item, Long> lastUseMap = new HashMap<>();
 

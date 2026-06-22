@@ -32,11 +32,11 @@ import java.util.concurrent.*;
 @FunctionAnnotation(name = "AutoExplosion", type = Type.Combat, desc = "Автоматически ставит кристал, при ставке обсидиана")
 public class AutoExplosion extends Function {
 
-    private final BooleanSetting correction = new BooleanSetting("Коррекция движения", true);
-    private final SliderSetting delay = new SliderSetting("Задержка", 100f, 50f, 300f, 1f);
+    private final BooleanSetting correction = new BooleanSetting("Коррекция движения", true, "Корректирует движение при ротации");
+    private final SliderSetting delay = new SliderSetting("Задержка", 100f, 50f, 300f, 1f).withDesc("Задержка перед ставкой кристалла");
 
-    private final BooleanSetting sanya = new BooleanSetting("Ставить по бинду", false);
-    private final BindSetting bind = new BindSetting("Кнопка", 0, () -> sanya.get());
+    private final BooleanSetting sanya = new BooleanSetting("Ставить по бинду", false, "Ставить кристалл по клавише");
+    private final BindSetting bind = new BindSetting("Кнопка", 0, () -> sanya.get()).withDesc("Клавиша ставки");
 
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
 

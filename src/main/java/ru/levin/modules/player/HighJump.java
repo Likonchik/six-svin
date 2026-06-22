@@ -12,7 +12,7 @@ import ru.levin.util.move.MoveUtil;
 @FunctionAnnotation(name = "HighJump", type = Type.Move)
 public class HighJump extends Function {
 
-    private final SliderSetting sila = new SliderSetting("Сила", 2.0f, 0.0f, 5f, 0.1f);
+    private final SliderSetting sila = new SliderSetting("Сила", 2.0f, 0.0f, 5f, 0.1f).withDesc("Сила прыжка вверх");
 
     private boolean wasShulkerOpen = false;
     private long jumpStartTime = 0;

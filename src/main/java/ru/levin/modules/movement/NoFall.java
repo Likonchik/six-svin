@@ -13,7 +13,7 @@ import ru.levin.modules.setting.SliderSetting;
 @FunctionAnnotation(name = "NoFall", keywords = {"NoFall", "Падение"}, desc = "Спуф onGround при падении (тест fall-чеков)", type = Type.Move)
 public class NoFall extends Function {
 
-    private final SliderSetting minFall = new SliderSetting("Мин. падение", 2.0, 0, 5, 0.5);
+    private final SliderSetting minFall = new SliderSetting("Мин. падение", 2.0, 0, 5, 0.5).withDesc("Порог высоты для спуфа");
 
     public NoFall() {
         addSettings(minFall);

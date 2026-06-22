@@ -12,9 +12,9 @@ import ru.levin.modules.Type;
 @FunctionAnnotation(name = "Timer", type = Type.Move, desc = "Ускорение игры")
 public class Timer extends Function {
 
-    private final SliderSetting timerAmount = new SliderSetting("Скорость", 2, 0f, 10, 0.01f);
-    private final BooleanSetting smart = new BooleanSetting("Умный", true);
-    private final SliderSetting ticks = new SliderSetting("Скорость убывания", 3.8f, 0.15f, 5.0f, 0.1f,() -> smart.get());
+    private final SliderSetting timerAmount = new SliderSetting("Скорость", 2, 0f, 10, 0.01f).withDesc("Множитель скорости тиков");
+    private final BooleanSetting smart = new BooleanSetting("Умный", true, "Сброс при перегрузке античита");
+    private final SliderSetting ticks = new SliderSetting("Скорость убывания", 3.8f, 0.15f, 5.0f, 0.1f,() -> smart.get()).withDesc("Темп восстановления таймера");
 
     private float maxViolation = 100.0F;
     private float violation = 0.0F;

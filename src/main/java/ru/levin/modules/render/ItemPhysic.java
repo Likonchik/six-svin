@@ -9,7 +9,7 @@ import ru.levin.modules.setting.ModeSetting;
 @FunctionAnnotation(name = "ItemPhysic",desc  = "Красиво лежат предметы на земле", type = Type.Render)
 public class ItemPhysic extends Function {
 
-    public final ModeSetting mode = new ModeSetting("Физика","Обычная","Обычная","2D");
+    public final ModeSetting mode = new ModeSetting("Физика","Обычная","Обычная","2D").withDesc("Режим отображения предметов");
     public ItemPhysic() {
         addSettings(mode);
     }

@@ -20,6 +20,7 @@
 		"display.MixinInGameOverlayRenderer",
 		"display.MixinHandledScreen",
 		"display.MixinHeldItemRenderer",
+		"display.MixinScreenMusic",
 		"display.MixinPlayerListHud",
 		"display.MixinWorldRenderer",
 		"player.MixinPlayerEntityRenderer",
@@ -63,7 +64,10 @@
 		"client.RenderTickCounterDynamicAccessor",
 		"client.MixinTitleScreen",
 		"world.MixinItemEntityRenderer",
-		"world.MixinClientWorld"
+		"world.MixinClientWorld",
+		"world.MixinLevel",
+		"world.MixinLevelTimeAccess",
+		"iface.OptionInstanceAccessor"
 	],
 	"injectors": {
 		"defaultRequire": 1

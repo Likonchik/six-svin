@@ -35,19 +35,19 @@ public class AutoTotem extends Function {
             "Брать если",
             Arrays.asList("Кристалл", "Игрок с булавой"),
             new String[]{"Кристалл", "Игрок с булавой", "Рядом крипер", "Обсидиан", "Якорь", "Падение", "Вагонетка"}
-    );
+    ).withDesc("Когда брать тотем");
 
-    private final SliderSetting HPElytra = new SliderSetting("Брать раньше на элитрах", 5, 2, 6, 1);
-    private final BooleanSetting back = new BooleanSetting("Возвращать предмет", true);
-    private final BooleanSetting noBallSwitch = new BooleanSetting("Не брать если шар", false);
-    private final BooleanSetting saveEnchantedtotem = new BooleanSetting("Сохранять чаренные тотемы", true);
-    private final BooleanSetting absorptionCheck = new BooleanSetting("+ Золотые сердца", false);
-    public final SliderSetting hp = new SliderSetting("Здоровье", 4.5f, 2.0f, 20.0f, 0.1f);
+    private final SliderSetting HPElytra = new SliderSetting("Брать раньше на элитрах", 5, 2, 6, 1).withDesc("Запас здоровья на элитрах");
+    private final BooleanSetting back = new BooleanSetting("Возвращать предмет", true, "Вернуть предмет обратно в руку");
+    private final BooleanSetting noBallSwitch = new BooleanSetting("Не брать если шар", false, "Не менять голову в левой руке");
+    private final BooleanSetting saveEnchantedtotem = new BooleanSetting("Сохранять чаренные тотемы", true, "Беречь зачарованные тотемы");
+    private final BooleanSetting absorptionCheck = new BooleanSetting("+ Золотые сердца", false, "Учитывать золотые сердца");
+    public final SliderSetting hp = new SliderSetting("Здоровье", 4.5f, 2.0f, 20.0f, 0.1f).withDesc("Здоровье для тотема");
 
-    private final SliderSetting crystalDistance = new SliderSetting("До кристалла", 4, 2, 6, 1, () -> mode.get("Кристалл"));
-    private final SliderSetting anchorDistance = new SliderSetting("До якоря", 4, 2, 6, 1, () -> mode.get("Якорь"));
-    private final SliderSetting minecartDistance = new SliderSetting("До Вагонетки", 4, 2, 8, 1, () -> mode.get("Вагонетка"));
-    private final SliderSetting obsidianDistance = new SliderSetting("До Обсидиана", 4, 2, 8, 1, () -> mode.get("Обсидиан"));
+    private final SliderSetting crystalDistance = new SliderSetting("До кристалла", 4, 2, 6, 1, () -> mode.get("Кристалл")).withDesc("Дистанция до кристалла");
+    private final SliderSetting anchorDistance = new SliderSetting("До якоря", 4, 2, 6, 1, () -> mode.get("Якорь")).withDesc("Дистанция до якоря");
+    private final SliderSetting minecartDistance = new SliderSetting("До Вагонетки", 4, 2, 8, 1, () -> mode.get("Вагонетка")).withDesc("Дистанция до вагонетки");
+    private final SliderSetting obsidianDistance = new SliderSetting("До Обсидиана", 4, 2, 8, 1, () -> mode.get("Обсидиан")).withDesc("Дистанция до обсидиана");
 
     private int item = -1;
 

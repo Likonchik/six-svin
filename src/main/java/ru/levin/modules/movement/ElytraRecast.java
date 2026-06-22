@@ -19,9 +19,9 @@ import ru.levin.util.player.InventoryUtil;
 @SuppressWarnings("All")
 @FunctionAnnotation(name = "ElytraRecast", desc = "Автоматический ререк кидание элитры", type = Type.Move)
 public class ElytraRecast extends Function {
-    public BooleanSetting changePitch = new BooleanSetting("ChangePitch", true);
-    public SliderSetting pitchValue = new SliderSetting("PitchValue", 55f, -90f, 90f, 1,() -> changePitch.get());
-    public BooleanSetting autoJump = new BooleanSetting("AutoJump", true);
+    public BooleanSetting changePitch = new BooleanSetting("ChangePitch", true, "Менять угол взгляда при рерке");
+    public SliderSetting pitchValue = new SliderSetting("PitchValue", 55f, -90f, 90f, 1,() -> changePitch.get()).withDesc("Угол наклона взгляда");
+    public BooleanSetting autoJump = new BooleanSetting("AutoJump", true, "Авто-прыжок перед запуском");
 
     public ElytraRecast() {
         addSettings(changePitch, pitchValue, autoJump);

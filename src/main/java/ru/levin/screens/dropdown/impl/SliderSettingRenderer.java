@@ -2,8 +2,10 @@ package ru.levin.screens.dropdown.impl;
 
 import net.minecraft.client.gui.GuiGraphics;
 import com.mojang.blaze3d.vertex.PoseStack;
+import ru.levin.manager.IMinecraft;
 import ru.levin.manager.Manager;
 import ru.levin.modules.setting.SliderSetting;
+import ru.levin.screens.dropdown.DescriptionRenderQueue;
 import ru.levin.screens.dropdown.SettingRenderer;
 import ru.levin.manager.fontManager.FontUtils;
 import ru.levin.util.render.RenderUtil;
@@ -11,7 +13,7 @@ import ru.levin.util.render.RenderUtil;
 import java.awt.*;
 import java.util.Locale;
 
-public class SliderSettingRenderer implements SettingRenderer<SliderSetting> {
+public class SliderSettingRenderer implements SettingRenderer<SliderSetting>, IMinecraft {
 
     private static final int HEIGHT = 20;
     private static final int BAR_HEIGHT = 4;
@@ -65,6 +67,15 @@ public class SliderSettingRenderer implements SettingRenderer<SliderSetting> {
 
         RenderUtil.drawCircle(matrices, circleX, circleY, CIRCLE_RADIUS, Color.WHITE.getRGB());
         matrices.popPose();
+
+        if (setting.getDesc() != null && !setting.getDesc().isEmpty()) {
+            double s = mc.getWindow().getGuiScale();
+            int mX = (int) (mc.mouseHandler.xpos() / s);
+            int mY = (int) (mc.mouseHandler.ypos() / s);
+            if (RenderUtil.isInRegion(mX, mY, x, y, width, height)) {
+                DescriptionRenderQueue.add(setting.getDesc(), mX + 6, mY + 6);
+            }
+        }
     }
 
 

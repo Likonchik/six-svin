@@ -18,9 +18,9 @@ import ru.levin.util.player.TimerUtil;
 
 @FunctionAnnotation(name = "TPLoot", desc = "Телепортирует на место, где лежат предметы", type = Type.Misc)
 public class TPLoot extends Function {
-    private final ModeSetting lootEnd = new ModeSetting("После лута", "Ничего", "Ничего", "/hub", "/spawn", "home", "Своя");
-    private final TextSetting text = new TextSetting("Команда", "/home home", () -> lootEnd.is("home"));
-    private final TextSetting custom = new TextSetting("Команда", "/test", () -> lootEnd.is("Своя"));
+    private final ModeSetting lootEnd = new ModeSetting("После лута", "Ничего", "Ничего", "/hub", "/spawn", "home", "Своя").withDesc("Действие после сбора лута");
+    private final TextSetting text = new TextSetting("Команда", "/home home", () -> lootEnd.is("home")).withDesc("Команда телепорта домой");
+    private final TextSetting custom = new TextSetting("Команда", "/test", () -> lootEnd.is("Своя")).withDesc("Своя команда телепорта");
 
     private final TimerUtil timerUtil = new TimerUtil();
     private boolean check;

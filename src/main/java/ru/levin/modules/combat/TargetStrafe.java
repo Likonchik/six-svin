@@ -12,13 +12,13 @@ import ru.levin.modules.setting.SliderSetting;
 
 @FunctionAnnotation(name = "TargetStrafe", type = Type.Combat,desc = "Как в нурике стрейфыы ыыы")
 public class TargetStrafe extends Function {
-    public final SliderSetting speedSlider = new SliderSetting("Скорость",0.095f,0.01f,1.2f,0.01f);
+    public final SliderSetting speedSlider = new SliderSetting("Скорость",0.095f,0.01f,1.2f,0.01f).withDesc("Скорость стрейфа");
 
-    public final ModeSetting ptytag = new ModeSetting("Метод притяга","Vector","Vector","Motion / Velocity");
-    public final SliderSetting blocks = new SliderSetting("Дистанция притяга",7f,0.01f,12f,0.01f);
-    public final SliderSetting hitbox = new SliderSetting("Хитбокс для буста",0.095f,0.01f,50.0f,0.01f);
-    public final BooleanSetting predictCheck = new BooleanSetting("Предикт",true);
-    public final SliderSetting predict = new SliderSetting("Предикт значение",2.5f,0.1f,4.0f,0.1f,() -> predictCheck.get());
+    public final ModeSetting ptytag = new ModeSetting("Метод притяга","Vector","Vector","Motion / Velocity").withDesc("Способ притяжения к цели");
+    public final SliderSetting blocks = new SliderSetting("Дистанция притяга",7f,0.01f,12f,0.01f).withDesc("Радиус притяжения в блоках");
+    public final SliderSetting hitbox = new SliderSetting("Хитбокс для буста",0.095f,0.01f,50.0f,0.01f).withDesc("Размер хитбокса для ускорения");
+    public final BooleanSetting predictCheck = new BooleanSetting("Предикт",true,"Упреждение движения цели");
+    public final SliderSetting predict = new SliderSetting("Предикт значение",2.5f,0.1f,4.0f,0.1f,() -> predictCheck.get()).withDesc("Сила упреждения");
 
     public final BooleanSetting predictView = new BooleanSetting("Видеть предикт",false,"Для вашего экрана вы будите прям обгонять противника");
 

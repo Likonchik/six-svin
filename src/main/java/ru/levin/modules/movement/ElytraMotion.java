@@ -14,7 +14,7 @@ import ru.levin.modules.setting.SliderSetting;
 
 @FunctionAnnotation(name = "ElytraMotion", desc = "Замораживает игрока при полёте на элитрах и таргете", type = Type.Move)
 public class ElytraMotion extends Function {
-    private final SliderSetting distance = new SliderSetting("Дистанция работы", 3.0F, 0.1F, 5.0F, 0.1F);
+    private final SliderSetting distance = new SliderSetting("Дистанция работы", 3.0F, 0.1F, 5.0F, 0.1F).withDesc("Дистанция до цели для заморозки");
 
     private boolean shouldFreeze;
     private Vec3 freezePosition = Vec3.ZERO;

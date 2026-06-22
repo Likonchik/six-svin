@@ -20,7 +20,7 @@ import ru.levin.util.player.TimerUtil;
 @SuppressWarnings("all")
 @FunctionAnnotation(name = "Spider", desc = "Автоматически ставит воду и карабкается после прыжка", type = ru.levin.modules.Type.Move)
 public class Spider extends Function {
-    public final ModeSetting mode = new ModeSetting("Тип", "RwWater", "RwWater", "Matrix");
+    public final ModeSetting mode = new ModeSetting("Тип", "RwWater", "RwWater", "Matrix").withDesc("Способ подъёма");
     private final TimerUtil timerUtil = new TimerUtil();
 
     private boolean climbing = false;

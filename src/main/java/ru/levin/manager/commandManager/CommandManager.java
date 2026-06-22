@@ -32,6 +32,7 @@ public class CommandManager implements IMinecraft {
         register(new ParseCommand());
         register(new VclipCommand());
         register(new HclipCommand());
+        register(new MusicCommand());
 
     }
 

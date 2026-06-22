@@ -13,6 +13,8 @@ base {
 
 repositories {
 	mavenCentral()
+	// dev.lavalink.youtube:v2 (standalone youtube-source for Lavaplayer 2.x); lavaplayer itself is on Central.
+	maven { url 'https://maven.lavalink.dev/releases' }
 }
 
 neoForge {
@@ -55,6 +57,35 @@ dependencies {
 	// ...also on the dev-run classpath so TACZ actually loads in `runClient` for testing the gun modules.
 	// It self-contains its deps (luaj/simplebedrockmodel/etc via jarJar). NOT bundled into our production jar.
 	runtimeOnly files('libs/tacz-neoforge-1.21.1-1.1.8-hotfix-r1.jar')
+
+	// --- MediaPlayer: lavaplayer (resolve+decode YT/YTM/SC/Bandcamp/HTTP/local -> PCM) + standalone
+	// youtube-source v2 (Lavaplayer 2.x). MC/NeoForge ALREADY ships Apache HttpClient 4 + commons +
+	// slf4j -> excluding those groups is correct (bundling them = split-package crash under defaultRequire=1).
+	def lavaExcludes = {
+		exclude group: 'org.apache.httpcomponents'
+		exclude group: 'commons-io'
+		exclude group: 'commons-logging'
+		exclude group: 'commons-codec'
+		exclude group: 'org.slf4j'
+		exclude group: 'org.apache.logging.log4j' // MC ships log4j; youtube-source 'common' pulls log4j-slf4j2-impl
+	}
+	implementation('dev.arbjerg:lavaplayer:' + project.lavaplayer_version, lavaExcludes)
+	implementation('dev.lavalink.youtube:v2:' + project.youtube_source_version, lavaExcludes)
+	jarJar('dev.arbjerg:lavaplayer:' + project.lavaplayer_version) { transitive = true; exclude group: 'org.apache.httpcomponents'; exclude group: 'commons-io'; exclude group: 'commons-logging'; exclude group: 'commons-codec'; exclude group: 'org.slf4j'; exclude group: 'org.apache.logging.log4j' }
+	jarJar('dev.lavalink.youtube:v2:' + project.youtube_source_version) { transitive = true; exclude group: 'org.apache.httpcomponents'; exclude group: 'commons-io'; exclude group: 'commons-logging'; exclude group: 'commons-codec'; exclude group: 'org.slf4j'; exclude group: 'org.apache.logging.log4j' }
+	// ModDevGradle STRIPS jarJar from the dev run classpath -> put lava deps on every run's classpath so they load in runClient.
+	additionalRuntimeClasspath('dev.arbjerg:lavaplayer:' + project.lavaplayer_version, lavaExcludes)
+	additionalRuntimeClasspath('dev.lavalink.youtube:v2:' + project.youtube_source_version, lavaExcludes)
+
+	// --- MediaPlayer: librespot-java (Spotify). COMPILE-ONLY: bundling at runtime fails on NeoForge's
+	// securejar (kotlin-stdlib JPMS jdk7/jdk8 split-package). SpotifyPlayer compiles against this but is
+	// INERT at runtime (try/catch); Spotify links fall back to the YouTube mirror (SpotifyResolver).
+	compileOnly('xyz.gianlu.librespot:librespot-player:' + project.librespot_version) {
+		exclude group: 'com.google.code.gson'
+		exclude group: 'org.slf4j'
+		exclude group: 'org.apache.logging.log4j'
+		exclude group: 'org.jetbrains', module: 'annotations'
+	}
 }
 
 java {

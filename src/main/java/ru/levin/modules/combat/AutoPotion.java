@@ -31,13 +31,13 @@ import java.util.Optional;
 @SuppressWarnings("All")
 @FunctionAnnotation(name = "AutoPotion",keywords = "AutoBuff", type = Type.Combat,desc = "Автоматически кидает бафы под себя")
 public class AutoPotion extends Function {
-    private final BooleanSetting autoOff = new BooleanSetting("Авто отключение", false);
+    private final BooleanSetting autoOff = new BooleanSetting("Авто отключение", false, "Выключать после баффа");
 
     public MultiSetting potions = new MultiSetting(
             "Бросать",
             Arrays.asList("Силу", "Скорость", "Огнестойкость"),
             new String[]{"Силу", "Скорость", "Огнестойкость"}
-    );
+    ).withDesc("Какие зелья кидать");
     public final TimerUtil timer = new TimerUtil();
     private boolean spoofed = false;
     public boolean isActivePotion;

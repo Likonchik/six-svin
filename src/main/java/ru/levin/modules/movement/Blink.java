@@ -19,7 +19,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 @FunctionAnnotation(name = "Blink", desc = "Задерживает пакеты отправленные на сервер", type = Type.Move)
 public class Blink extends Function {
-    private final SliderSetting maxTicks = new SliderSetting("Макс. тики", 20f, 1f, 50f, 1f);
+    private final SliderSetting maxTicks = new SliderSetting("Макс. тики", 20f, 1f, 50f, 1f).withDesc("Сколько тиков задерживать пакеты");
     private final CopyOnWriteArrayList<Packet<?>> packetBuffer = new CopyOnWriteArrayList<>();
 
     private AABB playerBoundingBox;

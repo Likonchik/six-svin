@@ -26,8 +26,8 @@ import static ru.levin.util.render.RenderUtil.drawTexture;
 
 @FunctionAnnotation(name = "Arrows", desc = "Стрелки к игрокам на экране", type = Type.Render)
 public class Arrows extends Function {
-    private final SliderSetting radius = new SliderSetting("Радиус", 70f, 50f, 160f, 1f);
-    private final BooleanSetting dynamic = new BooleanSetting("Динамические", true);
+    private final SliderSetting radius = new SliderSetting("Радиус", 70f, 50f, 160f, 1f).withDesc("Радиус круга стрелок");
+    private final BooleanSetting dynamic = new BooleanSetting("Динамические", true, "Радиус растёт при беге");
     private float animatedRadius = radius.get().floatValue();
     private final Map<UUID, Float> smoothedAngles = new HashMap<>();
 

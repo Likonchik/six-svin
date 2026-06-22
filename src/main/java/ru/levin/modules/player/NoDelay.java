@@ -15,10 +15,10 @@ import ru.levin.modules.setting.BooleanSetting;
 @FunctionAnnotation(name = "NoDelay" ,desc  = "Убирает задержку предметам", type = Type.Player)
 public class NoDelay extends Function {
 
-    private final BooleanSetting jump = new BooleanSetting("Прыжок",true);
-    private final BooleanSetting xp = new BooleanSetting("Пузырёк опыта",true);
-    private final BooleanSetting crystal = new BooleanSetting("Кристаллы",true);
-    private final BooleanSetting place = new BooleanSetting("ПКМ",false);
+    private final BooleanSetting jump = new BooleanSetting("Прыжок",true,"Убирает задержку прыжка");
+    private final BooleanSetting xp = new BooleanSetting("Пузырёк опыта",true,"Без задержки на опыт");
+    private final BooleanSetting crystal = new BooleanSetting("Кристаллы",true,"Без задержки на кристаллы");
+    private final BooleanSetting place = new BooleanSetting("ПКМ",false,"Без задержки установки блоков");
 
     public NoDelay() {
         addSettings(jump,xp,crystal,place);

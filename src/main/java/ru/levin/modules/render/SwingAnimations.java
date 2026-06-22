@@ -26,13 +26,13 @@ import ru.levin.modules.Type;
 
 @FunctionAnnotation(name = "SwingAnimations", desc = "Красивые анимации для предмета в руке", type = Type.Render)
 public class SwingAnimations extends Function {
-    private final ModeSetting mode = new ModeSetting("Тип", "Smooth", "Smooth", "Block", "ToBack","SelfBack","360","Down","Glide","DropDown","DeadCode");
+    private final ModeSetting mode = new ModeSetting("Тип", "Smooth", "Smooth", "Block", "ToBack","SelfBack","360","Down","Glide","DropDown","DeadCode").withDesc("Тип анимации руки");
 
-    public final BooleanSetting slowAnimation = new BooleanSetting("Плавность", false);
-    public final SliderSetting slowAnimationSpeed = new SliderSetting("Сила плавности", 12f, 1, 50, 1, () -> slowAnimation.get());
+    public final BooleanSetting slowAnimation = new BooleanSetting("Плавность", false, "Сглаживание анимации");
+    public final SliderSetting slowAnimationSpeed = new SliderSetting("Сила плавности", 12f, 1, 50, 1, () -> slowAnimation.get()).withDesc("Сила сглаживания");
 
-    private final SliderSetting corner = new SliderSetting("Угол", 12.0f, 1.0f, 360.0f, 1.0f);
-    private final SliderSetting slant = new SliderSetting("Наклон", 12.0f, 1.0f, 360.0f, 1.0f);
+    private final SliderSetting corner = new SliderSetting("Угол", 12.0f, 1.0f, 360.0f, 1.0f).withDesc("Угол анимации");
+    private final SliderSetting slant = new SliderSetting("Наклон", 12.0f, 1.0f, 360.0f, 1.0f).withDesc("Наклон анимации");
 
     public SwingAnimations() {
         addSettings(mode,slowAnimation,slowAnimationSpeed,corner,slant);
@@ -176,11 +176,27 @@ public class SwingAnimations extends Function {
             } else {
                 boolean bl2 = arm == HumanoidArm.RIGHT;
                 ViewModel viewModel = Manager.FUNCTION_MANAGER.viewModel;
-                if (viewModel.state) {
+                // TACZ-ствол получает ViewModel ТОЛЬКО через MixinApplyFirstPersonGunTransform (свой фрейм),
+                // иначе тут применилось бы ВТОРОЙ раз (двойной масштаб/сдвиг -> огромный ствол перекрывает
+                // наши визуалы при перезарядке). Для не-стволов — как было.
+                boolean taczGun;
+                try { taczGun = !item.isEmpty() && com.tacz.guns.api.item.IGun.getIGunOrNull(item) != null; }
+                catch (Throwable ignored) { taczGun = false; }
+                if (viewModel.state && !taczGun) {
                     if (bl2) {
                         matrices.translate(viewModel.right_x.get().floatValue(), viewModel.right_y.get().floatValue(), viewModel.right_z.get().floatValue());
+                        matrices.mulPose(Axis.XP.rotationDegrees(viewModel.right_rot_x.get().floatValue()));
+                        matrices.mulPose(Axis.YP.rotationDegrees(viewModel.right_rot_y.get().floatValue()));
+                        matrices.mulPose(Axis.ZP.rotationDegrees(viewModel.right_rot_z.get().floatValue()));
+                        float s = viewModel.right_scale.get().floatValue();
+                        matrices.scale(s, s, s);
                     } else {
                         matrices.translate(-viewModel.left_x.get().floatValue(), viewModel.left_y.get().floatValue(), viewModel.left_z.get().floatValue());
+                        matrices.mulPose(Axis.XP.rotationDegrees(viewModel.left_rot_x.get().floatValue()));
+                        matrices.mulPose(Axis.YP.rotationDegrees(viewModel.left_rot_y.get().floatValue()));
+                        matrices.mulPose(Axis.ZP.rotationDegrees(viewModel.left_rot_z.get().floatValue()));
+                        float s = viewModel.left_scale.get().floatValue();
+                        matrices.scale(s, s, s);
                     }
                 }
 

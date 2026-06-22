@@ -18,13 +18,13 @@ import ru.levin.util.player.TimerUtil;
 
 @FunctionAnnotation(name = "AutoSwap", type = Type.Combat,desc = "Позволяет менять предметы по бинду")
 public class AutoSwap extends Function {
-    private final BindSetting itemSwapKey = new BindSetting("Кнопка смены предмета", 0);
-    private final ModeSetting firstItem = new ModeSetting("Первый предмет", "Щит", "Щит", "Яблоко", "Тотем", "Шар", "Фейерверк");
-    private final ModeSetting secondItem = new ModeSetting("Второй предмет", "Щит", "Щит", "Яблоко", "Тотем", "Шар", "Фейерверк");
+    private final BindSetting itemSwapKey = new BindSetting("Кнопка смены предмета", 0).withDesc("Клавиша смены предмета");
+    private final ModeSetting firstItem = new ModeSetting("Первый предмет", "Щит", "Щит", "Яблоко", "Тотем", "Шар", "Фейерверк").withDesc("Первый предмет смены");
+    private final ModeSetting secondItem = new ModeSetting("Второй предмет", "Щит", "Щит", "Яблоко", "Тотем", "Шар", "Фейерверк").withDesc("Второй предмет смены");
 
-    private final BooleanSetting swapSwordWithAxe = new BooleanSetting("Менять топор и меч", false);
+    private final BooleanSetting swapSwordWithAxe = new BooleanSetting("Менять топор и меч", false, "Также менять оружие");
 
-    private final BooleanSetting funTimeAndHolyWorldBypass = new BooleanSetting("Обход FT/HW", false);
+    private final BooleanSetting funTimeAndHolyWorldBypass = new BooleanSetting("Обход FT/HW", false, "Обход античита FunTime/HolyWorld");
     private final TimerUtil timer = new TimerUtil();
     private boolean bypassActive = false;
     private boolean awaitingSwap = false;

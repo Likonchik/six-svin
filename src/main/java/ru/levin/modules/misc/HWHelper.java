@@ -23,14 +23,14 @@ import java.util.Map;
 @FunctionAnnotation(name = "HWHelper", desc = "Быстрое взаимодействие с предметами на HollyWorld", type = Type.Misc)
 public class HWHelper extends Function {
 
-    private final BindSetting trapka = new BindSetting("Кнопка трапки", 0);
-    private final BindSetting trapkaBax = new BindSetting("Кнопка взрывной трапки", 0);
-    private final BindSetting stan = new BindSetting("Кнопка стана", 0);
-    private final BindSetting snow = new BindSetting("Кнопка кома снега", 0);
-    private final BindSetting babax = new BindSetting("Кнопка взрывной штучки", 0);
+    private final BindSetting trapka = new BindSetting("Кнопка трапки", 0).withDesc("Клавиша установки трапки");
+    private final BindSetting trapkaBax = new BindSetting("Кнопка взрывной трапки", 0).withDesc("Клавиша взрывной трапки");
+    private final BindSetting stan = new BindSetting("Кнопка стана", 0).withDesc("Клавиша стана");
+    private final BindSetting snow = new BindSetting("Кнопка кома снега", 0).withDesc("Клавиша кома снега");
+    private final BindSetting babax = new BindSetting("Кнопка взрывной штучки", 0).withDesc("Клавиша взрывной штучки");
 
     private final BooleanSetting bypass = new BooleanSetting("Обход", true, "Замедляет вас при свапе");
-    private final BooleanSetting inventoryUse = new BooleanSetting("Использовать из инвентаря", true);
+    private final BooleanSetting inventoryUse = new BooleanSetting("Использовать из инвентаря", true, "Брать предмет из инвентаря");
 
     private final TimerUtil timer = new TimerUtil();
     private boolean bypassActive = false;

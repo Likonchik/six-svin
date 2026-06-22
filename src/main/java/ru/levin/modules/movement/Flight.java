@@ -16,9 +16,9 @@ import ru.levin.util.player.TimerUtil;
 
 @FunctionAnnotation(name = "Flight", desc = "", type = Type.Move)
 public class Flight extends Function {
-    private final ModeSetting mode = new ModeSetting("Тип", "Motion", "Motion","ElytraRWOld");
-    private final SliderSetting xspeed = new SliderSetting("X - Скорость", 1f, 0.0f, 5f, 0.1f);
-    private final SliderSetting yspeed = new SliderSetting("Y - Скорость", 1f, 0.0f, 5f, 0.1f);
+    private final ModeSetting mode = new ModeSetting("Тип", "Motion", "Motion","ElytraRWOld").withDesc("Режим полёта");
+    private final SliderSetting xspeed = new SliderSetting("X - Скорость", 1f, 0.0f, 5f, 0.1f).withDesc("Горизонтальная скорость");
+    private final SliderSetting yspeed = new SliderSetting("Y - Скорость", 1f, 0.0f, 5f, 0.1f).withDesc("Вертикальная скорость");
 
     public Flight() {
         addSettings(mode, xspeed, yspeed);

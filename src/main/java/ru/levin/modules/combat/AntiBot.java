@@ -19,7 +19,7 @@ import java.util.List;
 @SuppressWarnings("All")
 @FunctionAnnotation(name = "AntiBot", desc = "Убирает бота от античита", type = Type.Combat)
 public class AntiBot extends Function {
-    private final BooleanSetting removeWorld = new BooleanSetting("Удалить из мира", false);
+    private final BooleanSetting removeWorld = new BooleanSetting("Удалить из мира", false, "Удалять ботов из мира");
     private final List<Entity> bots = new ArrayList<>();
 
     public AntiBot() {

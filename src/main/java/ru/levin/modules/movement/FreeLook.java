@@ -13,7 +13,7 @@ import ru.levin.manager.ClientManager;
 
 @FunctionAnnotation(name = "FreeLook", desc = "Позволит вращать камеру, при этом не меняя направления движения", type = Type.Move)
 public class FreeLook extends Function {
-    private final BindSetting bind = new BindSetting("Кнопка", 0);
+    private final BindSetting bind = new BindSetting("Кнопка", 0).withDesc("Клавиша включения обзора");
     private CameraType previousPerspective;
 
     public FreeLook() {

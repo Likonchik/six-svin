@@ -16,9 +16,9 @@ import ru.levin.modules.setting.SliderSetting;
 @FunctionAnnotation(name = "AutoReload", keywords = {"Перезарядка", "Reload", "Стволы"}, desc = "Авто-перезарядка оружия TACZ", type = Type.Combat)
 public class AutoReload extends Function {
 
-    private final SliderSetting threshold = new SliderSetting("Порог патронов", 0, 0, 60, 1);
-    private final BooleanSetting needInvAmmo = new BooleanSetting("Только при наличии патронов", true);
-    private final SliderSetting delay = new SliderSetting("Задержка, мс", 150, 0, 2000, 50);
+    private final SliderSetting threshold = new SliderSetting("Порог патронов", 0, 0, 60, 1).withDesc("Перезаряжать при остатке патронов");
+    private final BooleanSetting needInvAmmo = new BooleanSetting("Только при наличии патронов", true, "Не дёргать без патронов в инвентаре");
+    private final SliderSetting delay = new SliderSetting("Задержка, мс", 150, 0, 2000, 50).withDesc("Задержка между перезарядками");
 
     private long lastReload = 0L;
 

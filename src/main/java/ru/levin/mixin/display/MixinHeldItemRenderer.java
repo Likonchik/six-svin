@@ -4,6 +4,7 @@ import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.ItemInHandRenderer;
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.math.Axis;
 import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.item.MapItem;
 import net.minecraft.world.item.ItemStack;
@@ -39,8 +40,18 @@ public abstract class MixinHeldItemRenderer {
                 : player.getMainArm().getOpposite() == HumanoidArm.RIGHT;
         if (right) {
             matrices.translate(vm.right_x.get().floatValue(), vm.right_y.get().floatValue(), vm.right_z.get().floatValue());
+            matrices.mulPose(Axis.XP.rotationDegrees(vm.right_rot_x.get().floatValue()));
+            matrices.mulPose(Axis.YP.rotationDegrees(vm.right_rot_y.get().floatValue()));
+            matrices.mulPose(Axis.ZP.rotationDegrees(vm.right_rot_z.get().floatValue()));
+            float s = vm.right_scale.get().floatValue();
+            matrices.scale(s, s, s);
         } else {
             matrices.translate(-vm.left_x.get().floatValue(), vm.left_y.get().floatValue(), vm.left_z.get().floatValue());
+            matrices.mulPose(Axis.XP.rotationDegrees(vm.left_rot_x.get().floatValue()));
+            matrices.mulPose(Axis.YP.rotationDegrees(vm.left_rot_y.get().floatValue()));
+            matrices.mulPose(Axis.ZP.rotationDegrees(vm.left_rot_z.get().floatValue()));
+            float s = vm.left_scale.get().floatValue();
+            matrices.scale(s, s, s);
         }
     }
 }

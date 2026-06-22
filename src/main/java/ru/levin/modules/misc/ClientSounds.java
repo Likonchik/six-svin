@@ -15,9 +15,9 @@ public class ClientSounds extends Function {
             "Выбрать",
             Arrays.asList("Вход в клиент"),
             new String[]{"Вход в клиент"}
-    );
-    public final ModeSetting mode = new ModeSetting("Мод", "Type-1", "Type-1", "Type-2", "Type-3","Type-4");
-    public final SliderSetting volume = new SliderSetting("Громкость", 100f, 1f, 100f,1f);
+    ).withDesc("Выбор событий со звуком");
+    public final ModeSetting mode = new ModeSetting("Мод", "Type-1", "Type-1", "Type-2", "Type-3","Type-4").withDesc("Вариант звука");
+    public final SliderSetting volume = new SliderSetting("Громкость", 100f, 1f, 100f,1f).withDesc("Громкость звуков клиента");
 
 
     public ClientSounds() {

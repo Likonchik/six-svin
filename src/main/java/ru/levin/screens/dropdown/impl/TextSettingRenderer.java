@@ -85,11 +85,55 @@ public class TextSettingRenderer implements SettingRenderer<TextSetting> {
         return inside;
     }
 
+    // true, если это поле ссылки модуля MediaPlayer (там Ctrl+V/Ctrl+A/Enter ведут себя как URL-инпут)
+    private static boolean isMediaUrl(TextSetting s) {
+        try {
+            var mp = ru.levin.manager.Manager.FUNCTION_MANAGER.mediaPlayer;
+            return mp != null && s == mp.urlSetting();
+        } catch (Throwable t) { return false; }
+    }
+
     @Override
     public boolean keyPressed(TextSetting setting, int keyCode, int scanCode, int modifiers) {
         if (!setting.isFocused()) return false;
         String value = setting.getValue();
-        if (keyCode == GLFW.GLFW_KEY_ENTER) setting.setFocused(false);
+        boolean ctrl = (modifiers & GLFW.GLFW_MOD_CONTROL) != 0;
+        if (ctrl && keyCode == GLFW.GLFW_KEY_V) {
+            // вставка из буфера обмена (charTyped не доставляет paste)
+            try {
+                String clip = net.minecraft.client.Minecraft.getInstance().keyboardHandler.getClipboard();
+                if (clip != null && !clip.isEmpty()) {
+                    clip = clip.replace("\n", "").replace("\r", "");
+                    if (isMediaUrl(setting)) { // URL-поле: вставка ЗАМЕНЯЕТ всё (не нужно сначала чистить)
+                        setting.setValue(clip);
+                        setting.setCursorPosition(clip.length());
+                    } else {
+                        value = value.substring(0, setting.getCursorPosition()) + clip + value.substring(setting.getCursorPosition());
+                        setting.setValue(value);
+                        setting.setCursorPosition(setting.getCursorPosition() + clip.length());
+                    }
+                }
+            } catch (Throwable ignored) {}
+            return true;
+        }
+        if (ctrl && keyCode == GLFW.GLFW_KEY_A) {
+            if (isMediaUrl(setting)) { setting.setValue(""); setting.setCursorPosition(0); } // быстрый сброс поля
+            else setting.setCursorPosition(value.length());
+            return true;
+        }
+        if (keyCode == GLFW.GLFW_KEY_ENTER) {
+            setting.setFocused(false);
+            try { // ссылка MediaPlayer: коммит по Enter -> включить модуль, загрузить и ОЧИСТИТЬ поле
+                ru.levin.modules.render.MediaPlayer mp = ru.levin.manager.Manager.FUNCTION_MANAGER.mediaPlayer;
+                if (mp != null && setting == mp.urlSetting()) {
+                    if (!mp.state) mp.setState(true);
+                    mp.play(setting.getValue());
+                    setting.setValue("");
+                    setting.setCursorPosition(0);
+                }
+            } catch (Throwable ignored) {}
+            return true;
+        }
         else if (keyCode == GLFW.GLFW_KEY_BACKSPACE && setting.getCursorPosition() > 0) {
             value = value.substring(0, setting.getCursorPosition() - 1) + value.substring(setting.getCursorPosition());
             setting.setCursorPosition(setting.getCursorPosition() - 1);

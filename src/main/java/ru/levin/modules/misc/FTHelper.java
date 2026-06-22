@@ -18,11 +18,11 @@ import java.util.Map;
 
 @FunctionAnnotation(name = "FTHelper", desc = "Быстрое взаимодействие с предметами на FunTime", type = Type.Misc)
 public class FTHelper extends Function {
-    private final BindSetting trapka = new BindSetting("Кнопка трапки", 0);
-    private final BindSetting disorientation = new BindSetting("Кнопка дезориентации", 0);
-    private final BindSetting plast = new BindSetting("Кнопка пласта", 0);
-    private final BindSetting godaura = new BindSetting("Кнопка божьей ауры", 0);
-    private final BooleanSetting inventoryUse = new BooleanSetting("Использовать из инвентаря",true);
+    private final BindSetting trapka = new BindSetting("Кнопка трапки", 0).withDesc("Клавиша установки трапки");
+    private final BindSetting disorientation = new BindSetting("Кнопка дезориентации", 0).withDesc("Клавиша дезориентации");
+    private final BindSetting plast = new BindSetting("Кнопка пласта", 0).withDesc("Клавиша пласта");
+    private final BindSetting godaura = new BindSetting("Кнопка божьей ауры", 0).withDesc("Клавиша божьей ауры");
+    private final BooleanSetting inventoryUse = new BooleanSetting("Использовать из инвентаря",true,"Брать предмет из инвентаря");
 
     private final Map<BindSetting, Item> binds = new LinkedHashMap<>();
 

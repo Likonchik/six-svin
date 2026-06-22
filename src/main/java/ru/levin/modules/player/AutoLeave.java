@@ -18,22 +18,22 @@ import ru.levin.modules.setting.TextSetting;
 public class AutoLeave extends Function {
 
     private final ModeSetting mode = new ModeSetting("Режим",
-            "Рядом игрок", "Рядом игрок", "Мало Хп");
+            "Рядом игрок", "Рядом игрок", "Мало Хп").withDesc("Условие срабатывания");
 
     private final SliderSetting heal = new SliderSetting("Здоровье",
-            3, 1, 20, 1, () -> mode.is("Мало Хп"));
+            3, 1, 20, 1, () -> mode.is("Мало Хп")).withDesc("Порог здоровья для выхода");
 
     private final SliderSetting radius = new SliderSetting("Радиус до игрока",
-            60, 20, 150, 1, () -> mode.is("Рядом игрок"));
+            60, 20, 150, 1, () -> mode.is("Рядом игрок")).withDesc("Дистанция до игрока");
 
     private final ModeSetting run = new ModeSetting("Что делать",
-            "Выходить с сервера", "Выходить с сервера", "/hub", "телепортация домой");
+            "Выходить с сервера", "Выходить с сервера", "/hub", "телепортация домой").withDesc("Действие при срабатывании");
 
     private final TextSetting homeName = new TextSetting("Название точки дома",
-            "home", () -> run.is("телепортация домой"));
+            "home", () -> run.is("телепортация домой")).withDesc("Имя точки для /home");
 
     private final BooleanSetting pvpNoLeave =
-            new BooleanSetting("Не выходить если режим PVP", true,
+            new BooleanSetting("Не выходить если режим PVP", true, "Блокировать выход в бою",
                     () -> run.is("Выходить с сервера") || run.is("/hub"));
 
     private boolean triggered = false;

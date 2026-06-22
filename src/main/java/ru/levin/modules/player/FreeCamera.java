@@ -16,8 +16,8 @@ import ru.levin.util.move.MoveUtil;
 
 @FunctionAnnotation(name = "FreeCamera",desc = "Свободная камера", type = Type.Player)
 public class FreeCamera extends Function {
-    private final SliderSetting speed = new SliderSetting("X - Скорость", 1f, 0.1f, 3f,0.1f);
-    private final SliderSetting yspeed = new SliderSetting("Y - Скорость", 0.42f, 0.1f, 3f,0.1f);
+    private final SliderSetting speed = new SliderSetting("X - Скорость", 1f, 0.1f, 3f,0.1f).withDesc("Скорость по горизонтали");
+    private final SliderSetting yspeed = new SliderSetting("Y - Скорость", 0.42f, 0.1f, 3f,0.1f).withDesc("Скорость по вертикали");
 
     private float fakeYaw, fakePitch, prevFakeYaw, prevFakePitch;
     private double fakeX, fakeY, fakeZ, prevFakeX, prevFakeY, prevFakeZ;

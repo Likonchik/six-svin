@@ -11,8 +11,8 @@ import ru.levin.modules.setting.SliderSetting;
 
 @FunctionAnnotation(name = "AspectRatio" ,desc  = "Позволяет изменять соотношение сторон экрана", type = Type.Render)
 public class AspectRatio extends Function {
-    public final ModeSetting mods = new ModeSetting("Режим","16:9","4:3","16:9","1:1","16:10","Кастомный");
-    public final SliderSetting slider = new SliderSetting("Соотношение", 1.8f, 0.1f, 5.0f,0.1f,() -> mods.is("Кастомный"));
+    public final ModeSetting mods = new ModeSetting("Режим","16:9","4:3","16:9","1:1","16:10","Кастомный").withDesc("Соотношение сторон экрана");
+    public final SliderSetting slider = new SliderSetting("Соотношение", 1.8f, 0.1f, 5.0f,0.1f,() -> mods.is("Кастомный")).withDesc("Своё значение соотношения");
 
     public AspectRatio() {
         addSettings(mods,slider);

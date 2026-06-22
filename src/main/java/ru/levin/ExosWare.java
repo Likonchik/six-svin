@@ -163,6 +163,12 @@ public final class ExosWare {
 		Manager.CONFIG_MANAGER.saveConfiguration("AUTOCFG");
 		Manager.IRC_MANAGER.shutdown();
 		Manager.FUNCTION_MANAGER.globals.clear();
+		try {
+			if (Manager.FUNCTION_MANAGER != null && Manager.FUNCTION_MANAGER.mediaPlayer != null) {
+				Manager.FUNCTION_MANAGER.mediaPlayer.getEngine().saveQueue();   // сохранить очередь ДО teardown
+				Manager.FUNCTION_MANAGER.mediaPlayer.getEngine().shutdown();
+			}
+		} catch (Throwable ignored) {}
 		System.out.println("[-] Client shutdown");
 	}
 	public static void openURL(String url) {

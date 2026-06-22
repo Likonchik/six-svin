@@ -16,9 +16,9 @@ import ru.levin.util.player.TimerUtil;
 @FunctionAnnotation(name = "Speed", desc = "Поможет умереть быстрее", type = Type.Move)
 public class Speed extends Function {
 
-    private final ModeSetting mode = new ModeSetting("Режим", "Vanilla", "Vanilla");
+    private final ModeSetting mode = new ModeSetting("Режим", "Vanilla", "Vanilla").withDesc("Режим ускорения");
 
-    private final SliderSetting speed = new SliderSetting("Скорость",1f,0.1f,3f,0.1f);
+    private final SliderSetting speed = new SliderSetting("Скорость",1f,0.1f,3f,0.1f).withDesc("Скорость движения");
     private final TimerUtil timerUtil = new TimerUtil();
 
     public Speed() {

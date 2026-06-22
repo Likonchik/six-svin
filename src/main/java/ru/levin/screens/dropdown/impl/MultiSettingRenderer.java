@@ -4,6 +4,7 @@ import net.minecraft.client.gui.GuiGraphics;
 import ru.levin.manager.IMinecraft;
 import ru.levin.manager.Manager;
 import ru.levin.modules.setting.MultiSetting;
+import ru.levin.screens.dropdown.DescriptionRenderQueue;
 import ru.levin.screens.dropdown.SettingRenderer;
 import ru.levin.util.color.ColorUtil;
 import ru.levin.manager.fontManager.FontUtils;
@@ -125,6 +126,12 @@ public class MultiSettingRenderer implements SettingRenderer<MultiSetting>, IMin
             Scissor.pop();
 
             currentX += boxWidth + spacing;
+        }
+
+        // hover the setting name to see its description
+        if (setting.getDesc() != null && !setting.getDesc().isEmpty()
+                && RenderUtil.isInRegion((int) mouseX, (int) mouseY, x, y, width, TITLE_HEIGHT)) {
+            DescriptionRenderQueue.add(setting.getDesc(), (float) mouseX + 6, (float) mouseY + 6);
         }
     }
 

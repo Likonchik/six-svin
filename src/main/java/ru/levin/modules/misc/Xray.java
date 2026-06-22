@@ -20,22 +20,22 @@ import java.awt.*;
 
 @FunctionAnnotation(name = "Xray", desc = "Иксрей", type = Type.Misc)
 public class Xray extends Function {
-    public static SliderSetting radius = new SliderSetting("Радиус", 20f, 1f, 30f, 1f);
-    public static BooleanSetting ancient = new BooleanSetting("Незерит", true);
+    public static SliderSetting radius = new SliderSetting("Радиус", 20f, 1f, 30f, 1f).withDesc("Радиус подсветки руд");
+    public static BooleanSetting ancient = new BooleanSetting("Незерит", true, "Подсветка древних обломков");
 
-    public static BooleanSetting diamond = new BooleanSetting("Алмазы", true);
+    public static BooleanSetting diamond = new BooleanSetting("Алмазы", true, "Подсветка алмазной руды");
 
-    public static BooleanSetting emerald = new BooleanSetting("Изумруды", true);
+    public static BooleanSetting emerald = new BooleanSetting("Изумруды", true, "Подсветка изумрудной руды");
 
-    public static BooleanSetting gold = new BooleanSetting("Золото", true);
+    public static BooleanSetting gold = new BooleanSetting("Золото", true, "Подсветка золотой руды");
 
-    public static BooleanSetting iron = new BooleanSetting("Железо", true);
+    public static BooleanSetting iron = new BooleanSetting("Железо", true, "Подсветка железной руды");
 
-    public static BooleanSetting coal = new BooleanSetting("Уголь", true);
+    public static BooleanSetting coal = new BooleanSetting("Уголь", true, "Подсветка угольной руды");
 
-    public static BooleanSetting redstone = new BooleanSetting("Редстоун", true);
+    public static BooleanSetting redstone = new BooleanSetting("Редстоун", true, "Подсветка редстоуновой руды");
 
-    public static BooleanSetting lapise = new BooleanSetting("Лазурит", true);
+    public static BooleanSetting lapise = new BooleanSetting("Лазурит", true, "Подсветка лазуритовой руды");
 
 
     public Xray() {

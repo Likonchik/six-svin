@@ -13,9 +13,9 @@ import ru.levin.util.move.MoveUtil;
 @SuppressWarnings("All")
 @FunctionAnnotation(name = "NoWeb", type = Type.Move)
 public class NoWeb extends Function {
-    private final ModeSetting mode = new ModeSetting("Режим", "Custom", "Custom", "ReallyWorld");
-    private final SliderSetting speedXZ = new SliderSetting("Скорость по X и Z", 0.1F, 0.1F, 1, 0.1F,() -> mode.is("Custom"));
-    private final SliderSetting speedY = new SliderSetting("Скорость по Y", 0.1F, 0.1F, 4, 0.1F,() -> mode.is("Custom"));
+    private final ModeSetting mode = new ModeSetting("Режим", "Custom", "Custom", "ReallyWorld").withDesc("Режим обхода паутины");
+    private final SliderSetting speedXZ = new SliderSetting("Скорость по X и Z", 0.1F, 0.1F, 1, 0.1F,() -> mode.is("Custom")).withDesc("Горизонтальная скорость");
+    private final SliderSetting speedY = new SliderSetting("Скорость по Y", 0.1F, 0.1F, 4, 0.1F,() -> mode.is("Custom")).withDesc("Вертикальная скорость");
 
     public NoWeb() {
         addSettings(mode, speedXZ, speedY);

@@ -14,10 +14,10 @@ import net.minecraft.network.chat.Component;
 
 @FunctionAnnotation(name = "AutoDuelBot", type = Type.Misc,desc = "Тест")
 public class AutoDuelBot extends Function {
-    private final ModeSetting chat = new ModeSetting("Чат", "Локальный", "Локальный", "Глобальный");
-    private final SliderSetting fromMoney = new SliderSetting("От сколько монет", 1000, 1000, 1000000, 1000);
-    private final SliderSetting beforeMoney = new SliderSetting("До сколько монет", 1000000, 1000, 1000000, 1000);
-    private final SliderSetting messageDelay = new SliderSetting("Задержка сообщения", 5000L, 3000L, 30000L, 1000L);
+    private final ModeSetting chat = new ModeSetting("Чат", "Локальный", "Локальный", "Глобальный").withDesc("Тип чата для рекламы");
+    private final SliderSetting fromMoney = new SliderSetting("От сколько монет", 1000, 1000, 1000000, 1000).withDesc("Минимальная ставка");
+    private final SliderSetting beforeMoney = new SliderSetting("До сколько монет", 1000000, 1000, 1000000, 1000).withDesc("Максимальная ставка");
+    private final SliderSetting messageDelay = new SliderSetting("Задержка сообщения", 5000L, 3000L, 30000L, 1000L).withDesc("Интервал отправки рекламы");
 
     private final TimerUtil timerUtil = new TimerUtil();
 

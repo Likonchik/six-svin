@@ -6,6 +6,7 @@ import java.util.function.Supplier;
 public class Setting {
 
     protected String name;
+    protected String desc;
     protected Supplier<Boolean> visible;
 
     public boolean isVisible() {
@@ -18,5 +19,17 @@ public class Setting {
 
     public String getName() {
         return name;
+    }
+
+    public String getDesc() {
+        return desc;
+    }
+
+    // fluent description setter: new XSetting(...).withDesc("что делает") — shown as a hover tooltip.
+    // (BooleanSetting keeps its own desc via its constructors; this serves Slider/Mode/Multi settings.)
+    @SuppressWarnings("unchecked")
+    public <T extends Setting> T withDesc(String description) {
+        this.desc = description;
+        return (T) this;
     }
 }

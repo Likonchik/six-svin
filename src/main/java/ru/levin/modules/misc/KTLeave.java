@@ -37,23 +37,23 @@ import java.util.concurrent.CopyOnWriteArrayList;
 @FunctionAnnotation(name = "KTLeave", desc = "вы стали калестиум юзером", type = Type.Misc)
 public class KTLeave extends Function {
 
-    private final ModeSetting mode = new ModeSetting("Мод", "Motion", "Motion", "Packet");
-    private final BooleanSetting phase = new BooleanSetting("Phase", false);
-    private final BooleanSetting gravity = new BooleanSetting("Gravity", false);
-    private final BooleanSetting automount = new BooleanSetting("AutoMount", false);
-    private final BooleanSetting allowShift = new BooleanSetting("AllowShift", false);
+    private final ModeSetting mode = new ModeSetting("Мод", "Motion", "Motion", "Packet").withDesc("Режим движения лодки");
+    private final BooleanSetting phase = new BooleanSetting("Phase", false, "Проход сквозь блоки");
+    private final BooleanSetting gravity = new BooleanSetting("Gravity", false, "Включить гравитацию");
+    private final BooleanSetting automount = new BooleanSetting("AutoMount", false, "Авто-посадка в лодку");
+    private final BooleanSetting allowShift = new BooleanSetting("AllowShift", false, "Разрешить шифт");
 
-    private final SliderSetting speed = new SliderSetting("Speed", 2f, 0.0f, 25f, 0.1f);
-    private final SliderSetting yspeed = new SliderSetting("YSpeed", 1f, 0.0f, 10f, 0.1f);
+    private final SliderSetting speed = new SliderSetting("Speed", 2f, 0.0f, 25f, 0.1f).withDesc("Скорость движения");
+    private final SliderSetting yspeed = new SliderSetting("YSpeed", 1f, 0.0f, 10f, 0.1f).withDesc("Скорость по вертикали");
 
-    private final BooleanSetting cancel = new BooleanSetting("Cancel", false);
+    private final BooleanSetting cancel = new BooleanSetting("Cancel", false, "Отмена входящих пакетов");
 
-    private final BooleanSetting stopunloaded = new BooleanSetting("StopUnloaded", false);
-    private final BooleanSetting cancelrotations = new BooleanSetting("CancelRotations", false);
-    private final BooleanSetting limit = new BooleanSetting("Limit", false);
-    private final SliderSetting jitter = new SliderSetting("Jitter", 0.1f, 0.0f, 10f, 0.1f);
-    private final BooleanSetting spoofpackets = new BooleanSetting("SpoofPackets", false);
-    private final BooleanSetting ongroundpacket = new BooleanSetting("OnGroundPacket", false);
+    private final BooleanSetting stopunloaded = new BooleanSetting("StopUnloaded", false, "Стоп вне прогруженных чанков");
+    private final BooleanSetting cancelrotations = new BooleanSetting("CancelRotations", false, "Отмена пакетов поворота");
+    private final BooleanSetting limit = new BooleanSetting("Limit", false, "Ограничение пакетов");
+    private final SliderSetting jitter = new SliderSetting("Jitter", 0.1f, 0.0f, 10f, 0.1f).withDesc("Дрожание позиции");
+    private final BooleanSetting spoofpackets = new BooleanSetting("SpoofPackets", false, "Подмена пакетов");
+    private final BooleanSetting ongroundpacket = new BooleanSetting("OnGroundPacket", false, "Телепорт лодки на землю");
     private final CopyOnWriteArrayList<ServerboundMoveVehiclePacket> vehiclePackets = new CopyOnWriteArrayList<>();
 
     private int ticksEnabled = 0;

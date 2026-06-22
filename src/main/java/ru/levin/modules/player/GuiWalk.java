@@ -21,7 +21,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 @FunctionAnnotation(name = "GuiWalk",keywords = {"InventoryMove","GuiMove"}, type = Type.Player)
 public class GuiWalk extends Function {
-    public final ModeSetting bypass = new ModeSetting("Тип","Обычный","Обычный","FunTime");
+    public final ModeSetting bypass = new ModeSetting("Тип","Обычный","Обычный","FunTime").withDesc("Тип обхода античита");
 
     private final Queue<ServerboundContainerClickPacket> packetQueue = new ConcurrentLinkedQueue<>();
     private boolean wasInventoryOpen = false;

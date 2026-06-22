@@ -40,37 +40,37 @@ import java.util.concurrent.CopyOnWriteArrayList;
 @FunctionAnnotation(name = "ElytraTarget", desc = "Target players to elytra!", type = Type.Move)
 public class ElytraTarget extends Function {
 
-    public final ModeSetting mode = new ModeSetting("Тип", "Обычный", "Обычный", "Продвинутый");
+    public final ModeSetting mode = new ModeSetting("Тип", "Обычный", "Обычный", "Продвинутый").withDesc("Режим работы элитры");
 
-    private final SliderSetting sila = new SliderSetting("Отлёт", 8, 5, 40, 1, () -> mode.is("Продвинутый"));
-    private final SliderSetting silaTime = new SliderSetting("Время отлёта", 400f, 200f, 1000f, 10f, () -> mode.is("Продвинутый"));
+    private final SliderSetting sila = new SliderSetting("Отлёт", 8, 5, 40, 1, () -> mode.is("Продвинутый")).withDesc("Дальность отлёта от цели");
+    private final SliderSetting silaTime = new SliderSetting("Время отлёта", 400f, 200f, 1000f, 10f, () -> mode.is("Продвинутый")).withDesc("Длительность отлёта");
 
-    private final BindBooleanSetting perelet = new BindBooleanSetting("Перелёт", true);
-    private final SliderSetting predict = new SliderSetting("Предикт", 2.6f, 0.1f, 6f, 0.1f, () -> perelet.get());
+    private final BindBooleanSetting perelet = new BindBooleanSetting("Перелёт", "Предсказывать движение цели", true);
+    private final SliderSetting predict = new SliderSetting("Предикт", 2.6f, 0.1f, 6f, 0.1f, () -> perelet.get()).withDesc("Сила предсказания цели");
 
-    private final BooleanSetting leaveHP = new BooleanSetting("Улетать", true, () -> mode.is("Продвинутый"));
+    private final BooleanSetting leaveHP = new BooleanSetting("Улетать", true, "Улетать в опасных ситуациях", () -> mode.is("Продвинутый"));
     private final MultiSetting leaveList = new MultiSetting("Улетать при",
             Arrays.asList("Мало здоровья", "При исп. предмета", "Отжим щита"),
             List.of("Мало здоровья", "При исп. предмета"),
-            () -> leaveHP.get() && mode.is("Продвинутый"));
+            () -> leaveHP.get() && mode.is("Продвинутый")).withDesc("Условия для отлёта");
 
     private final BindBooleanSetting resolver = new BindBooleanSetting("Resolver уклонение", true, "Не даёт противнику попасть по вам, не эффективно если в на земле", () -> mode.is("Продвинутый"));
-    private final SliderSetting resolverStrength = new SliderSetting("Сила резольвера", 12, 4, 30, 1, () -> resolver.get() && mode.is("Продвинутый"));
+    private final SliderSetting resolverStrength = new SliderSetting("Сила резольвера", 12, 4, 30, 1, () -> resolver.get() && mode.is("Продвинутый")).withDesc("Сила уклонения от ударов");
 
     public final BindBooleanSetting prefer = new BindBooleanSetting("Менять направление", true, "Менять направление полёта при ударе", () -> mode.is("Продвинутый"));
 
     private final MultiSetting preferDir = new MultiSetting("Направление",
             Arrays.asList("Север", "Юг", "Запад", "Восток", "Верх"),
             List.of("Север", "Юг", "Запад", "Восток", "Верх", "Вниз"),
-            () -> mode.is("Продвинутый") && prefer.get());
+            () -> mode.is("Продвинутый") && prefer.get()).withDesc("Стороны для полёта");
 
     private final BooleanSetting avoidWalls = new BooleanSetting("Избегать стены", true, "Отклоняет траекторию, если впереди стена", () -> mode.is("Продвинутый"));
-    private final BooleanSetting firework = new BooleanSetting("Отправка фейерверков", true, () -> mode.is("Продвинутый"));
-    private final SliderSetting fireworkTime = new SliderSetting("Время отправки", 800f, 100f, 2000f, 10.0f, () -> firework.get() && mode.is("Продвинутый"));
+    private final BooleanSetting firework = new BooleanSetting("Отправка фейерверков", true, "Авто-использование фейерверков", () -> mode.is("Продвинутый"));
+    private final SliderSetting fireworkTime = new SliderSetting("Время отправки", 800f, 100f, 2000f, 10.0f, () -> firework.get() && mode.is("Продвинутый")).withDesc("Задержка между фейерверками");
 
-    private final BooleanSetting fakelags = new BooleanSetting("Fake Lags", true, () -> mode.is("Продвинутый"));
-    private final SliderSetting fakelagsDistance = new SliderSetting("Дистанция флагера", 10.0, 5.0, 20.0, 0.5, () -> fakelags.get() && mode.is("Продвинутый"));
-    private final SliderSetting fakelagsMaxDistance = new SliderSetting("Макс дистанция флагера", 30.0, 15.0, 50.0, 1.0, () -> fakelags.get() && mode.is("Продвинутый"));
+    private final BooleanSetting fakelags = new BooleanSetting("Fake Lags", true, "Задержка пакетов для обмана", () -> mode.is("Продвинутый"));
+    private final SliderSetting fakelagsDistance = new SliderSetting("Дистанция флагера", 10.0, 5.0, 20.0, 0.5, () -> fakelags.get() && mode.is("Продвинутый")).withDesc("Дистанция включения флагера");
+    private final SliderSetting fakelagsMaxDistance = new SliderSetting("Макс дистанция флагера", 30.0, 15.0, 50.0, 1.0, () -> fakelags.get() && mode.is("Продвинутый")).withDesc("Макс. дистанция флагера");
 
     private final CopyOnWriteArrayList<Packet<?>> packetBuffer = new CopyOnWriteArrayList<>();
     private boolean isAccumulatingPackets = false;
@@ -79,7 +79,7 @@ public class ElytraTarget extends Function {
     private Vec3 defensivePos = null;
     private final TimerUtil defensiveTimer = new TimerUtil();
 
-    private final BooleanSetting visual = new BooleanSetting("Рендерить позицию", false, () -> mode.is("Продвинутый") || mode.is("Обычный"));
+    private final BooleanSetting visual = new BooleanSetting("Рендерить позицию", false, "Отображать целевую позицию", () -> mode.is("Продвинутый") || mode.is("Обычный"));
 
     @Getter
     boolean defensiveActive, lastDefensive;

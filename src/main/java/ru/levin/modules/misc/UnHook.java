@@ -19,7 +19,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 @FunctionAnnotation(name = "UnHook",keywords = {"SelfDestruct"}, desc = "Отключение чита для прохождения проверки", type = Type.Misc)
 public class UnHook extends Function {
-    public static BindSetting unHookKey = new BindSetting("Кнопка возврата", GLFW.GLFW_KEY_INSERT);
+    public static BindSetting unHookKey = new BindSetting("Кнопка возврата", GLFW.GLFW_KEY_INSERT).withDesc("Клавиша возврата чита");
     public static final List<Function> functionsToBack = new CopyOnWriteArrayList<>();
     public UnHook() {
         addSettings(unHookKey);

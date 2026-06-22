@@ -13,9 +13,9 @@ import ru.levin.util.player.TimerUtil;
 @FunctionAnnotation(name = "Optimizer", desc = "Оптимизирует майнкрафт, делает больше ФПС", type = Type.Misc)
 public class Optimizer extends Function {
 
-    private final BooleanSetting memory = new BooleanSetting("Free memory", true);
-    private final BooleanSetting graphics = new BooleanSetting("Low graphics", true);
-    private final BooleanSetting boostFPS = new BooleanSetting("Max FPS", true);
+    private final BooleanSetting memory = new BooleanSetting("Free memory", true, "Очистка памяти");
+    private final BooleanSetting graphics = new BooleanSetting("Low graphics", true, "Низкая графика для ФПС");
+    private final BooleanSetting boostFPS = new BooleanSetting("Max FPS", true, "Снять лимит ФПС");
 
     private final TimerUtil timerHelper = new TimerUtil();
 

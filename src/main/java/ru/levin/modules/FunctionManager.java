@@ -41,6 +41,7 @@ public class FunctionManager {
     public final NoSlow noSlow;
     public final LittleSnickers littleSnickers;
     public final Cape cape;
+    public final MediaPlayer mediaPlayer;
     public final Spinbot spinbot;
     public final UnHook unHook;
     public final FullBright fullBright;
@@ -193,6 +194,7 @@ public class FunctionManager {
                 new TargetESP(),
                 new TPLoot(),
                 cape = new Cape(),
+                mediaPlayer = new MediaPlayer(),
            //     ktLeave = new KTLeave(),
                 littleSnickers = new LittleSnickers()
         ));

@@ -8,6 +8,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import ru.levin.ExosWare;
 import ru.levin.manager.IMinecraft;
+import ru.levin.manager.Manager;
 
 @Mixin(KeyboardHandler.class)
 public class MixinKeyBoard implements IMinecraft {
@@ -16,6 +17,14 @@ public class MixinKeyBoard implements IMinecraft {
         if (action == 1 && !(mc.screen instanceof Screen)) {
             ExosWare main = ExosWare.getInstance();
             main.keyPress(key);
+        } else if (action == 1 && mc.level == null) {
+            // вне мира (титульник/мультиплеер/подключение) обычный keyPress не зовётся (открыт экран).
+            // Роутим ТОЛЬКО transport-бинды MediaPlayer, чтобы можно было рулить музыкой из меню.
+            try {
+                if (Manager.FUNCTION_MANAGER != null && Manager.FUNCTION_MANAGER.mediaPlayer != null) {
+                    Manager.FUNCTION_MANAGER.mediaPlayer.onTransportKey(key);
+                }
+            } catch (Throwable ignored) {}
         }
     }
 }

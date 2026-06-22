@@ -14,8 +14,8 @@ public class SuperFirework extends Function {
             "BravoHvH",
             "ReallyWorld",
             "PulseHVH",
-            "Custom");
-    public final SliderSetting speed = new SliderSetting("Скорость", 1.70F, 1.50F, 8.00F, 0.01F,() -> mode.is("Custom"));
+            "Custom").withDesc("Пресет под сервер");
+    public final SliderSetting speed = new SliderSetting("Скорость", 1.70F, 1.50F, 8.00F, 0.01F,() -> mode.is("Custom")).withDesc("Сила буста фейерверка");
     public final BooleanSetting nearBoost = new BooleanSetting("Ускорение если рядом игрок",false,"Может флагать на новый версиях GrimAC");
     public float speedXZ = 1.5F;
     public float speedY = 1.5F;

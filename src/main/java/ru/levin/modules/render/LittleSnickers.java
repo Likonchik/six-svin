@@ -26,7 +26,7 @@ public class LittleSnickers extends Function {
     private boolean active = false;
     private Level lastWorld = null;
 
-    private final BooleanSetting bumbum = new BooleanSetting("Бегать за таргетом", false);
+    private final BooleanSetting bumbum = new BooleanSetting("Бегать за таргетом", false, "Пёс бежит к вашей цели");
 
     private int ticksAway = 0;
     private int stuckTicks = 0;

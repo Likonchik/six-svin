@@ -10,8 +10,8 @@ import ru.levin.modules.Type;
 
 @FunctionAnnotation(name = "NameProtect", desc = "", type = Type.Misc)
 public class NameProtect extends Function {
-    public final TextSetting text = new TextSetting("Ник","levin1337");
-    public final BooleanSetting friend = new BooleanSetting("Скрывать друзей",true);
+    public final TextSetting text = new TextSetting("Ник","levin1337").withDesc("Ник для замены вашего имени");
+    public final BooleanSetting friend = new BooleanSetting("Скрывать друзей",true,"Скрывать также ники друзей");
 
     public NameProtect() {
         addSettings(text,friend);

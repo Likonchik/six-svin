@@ -16,10 +16,10 @@ import java.awt.*;
 @FunctionAnnotation(name = "CrossHair", type = Type.Render)
 public class CrossHair extends Function {
 
-    private final SliderSetting attackSetting = new SliderSetting("Размер при ударе",6,0,20,1);
-    private final SliderSetting indentSetting = new SliderSetting("Сближенность",2,0,5,1);
-    private final SliderSetting size1Setting = new SliderSetting("Высота линий",6,2,10,1);
-    private final SliderSetting size2Setting = new SliderSetting("Толщина линий",2,2,4,1);
+    private final SliderSetting attackSetting = new SliderSetting("Размер при ударе",6,0,20,1).withDesc("Разброс прицела при ударе");
+    private final SliderSetting indentSetting = new SliderSetting("Сближенность",2,0,5,1).withDesc("Отступ линий от центра");
+    private final SliderSetting size1Setting = new SliderSetting("Высота линий",6,2,10,1).withDesc("Длина линий прицела");
+    private final SliderSetting size2Setting = new SliderSetting("Толщина линий",2,2,4,1).withDesc("Толщина линий прицела");
 
     public CrossHair() {
         addSettings(attackSetting,indentSetting,size1Setting,size2Setting);

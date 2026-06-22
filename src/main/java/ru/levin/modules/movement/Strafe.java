@@ -12,7 +12,7 @@ import ru.levin.util.move.MoveUtil;
 
 @FunctionAnnotation(name = "Strafe", desc = "Быстрое перемещение", type = Type.Move)
 public class Strafe extends Function {
-    private final ModeSetting mode = new ModeSetting("Тип", "MetaHvH", "MetaHvH");
+    private final ModeSetting mode = new ModeSetting("Тип", "MetaHvH", "MetaHvH").withDesc("Тип стрейфа");
 
     public Strafe() {
         addSettings(mode);

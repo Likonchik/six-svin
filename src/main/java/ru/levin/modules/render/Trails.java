@@ -33,7 +33,7 @@ public class Trails extends Function {
 
     private final MultiSetting targets = new MultiSetting("Отображать у",
             Arrays.asList("Друзей", "Меня"),
-            new String[]{"Игроков", "Друзей", "Меня"});
+            new String[]{"Игроков", "Друзей", "Меня"}).withDesc("Кому рисовать след");
 
     private final long trailLifetimeMs = 250L;
     private final double minDistance = 0.01;

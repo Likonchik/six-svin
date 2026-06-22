@@ -150,6 +150,7 @@ public class BulletTracers extends Function {
     private Vec3 nthFromLast(Trail tr, int k) {
         int target = tr.points.size() - 1 - k;
         int i = 0;
+        if (target < 0) return tr.points.getLast(); // out-of-range запрос — отдаём последнюю, без зацикливания
         for (Vec3 p : tr.points) {
             if (i == target) return p;
             i++;
@@ -221,7 +222,7 @@ public class BulletTracers extends Function {
         return (a << 24) | ((r & 0xFF) << 16) | ((g & 0xFF) << 8) | (b & 0xFF);
     }
 
-    // цвет состояния без затухания (для маркера) — используется в Task 3
+    // цвет состояния без затухания (для маркера удара)
     private int solidColor(State state) {
         return 0xFF000000 | (colorFor(state, 1, 2) & 0x00FFFFFF);
     }

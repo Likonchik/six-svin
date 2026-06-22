@@ -135,7 +135,13 @@ public class BulletTracers extends Function {
                     prev = p;
                     i++;
                 }
-                // маркер удара подключается в Task 3
+                if (marker.get() && tr.impact != null) {
+                    double s = markerSize.get().floatValue() / 2.0;
+                    AABB box = new AABB(
+                            tr.impact.x - s, tr.impact.y - s, tr.impact.z - s,
+                            tr.impact.x + s, tr.impact.y + s, tr.impact.z + s);
+                    Render3DUtil.drawBox(box, solidColor(tr.state), w, true, true, depth);
+                }
             }
         }
     }

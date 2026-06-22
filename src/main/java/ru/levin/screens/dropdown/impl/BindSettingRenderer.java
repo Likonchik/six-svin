@@ -6,6 +6,7 @@ import ru.levin.manager.IMinecraft;
 import ru.levin.modules.setting.BindSetting;
 import ru.levin.screens.dropdown.SettingRenderer;
 import ru.levin.manager.fontManager.FontUtils;
+import ru.levin.util.color.ColorUtil;
 import ru.levin.util.render.RenderUtil;
 import ru.levin.util.render.Scissor;
 
@@ -68,7 +69,7 @@ public class BindSettingRenderer implements SettingRenderer<BindSetting>, IMinec
 
         Scissor.push();
         Scissor.setFromComponentCoordinates(nameAreaX, y + (HEIGHT - FontUtils.durman[fontSizeName].getHeight()) / 2 - 1, nameAreaWidth, FontUtils.durman[fontSizeName].getHeight() + 2);
-        FontUtils.durman[fontSizeName].drawLeftAligned(ctx.pose(), name, nameAreaX - scrollOffset, y + (HEIGHT - FontUtils.durman[fontSizeName].getHeight()) / 2, Color.WHITE.getRGB());
+        FontUtils.durman[fontSizeName].drawLeftAligned(ctx.pose(), name, nameAreaX - scrollOffset, y + (HEIGHT - FontUtils.durman[fontSizeName].getHeight()) / 2, ColorUtil.getMenuText());
         Scissor.pop();
 
         RenderUtil.drawRoundedRect(ctx.pose(), buttonX, buttonY, buttonWidth, buttonHeight, BUTTON_RADIUS, new Color(40, 40, 40, 200).getRGB());

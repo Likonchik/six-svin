@@ -117,7 +117,7 @@ public class BindBooleanSettingRenderer implements SettingRenderer<BindBooleanSe
 
         Scissor.push();
         Scissor.setFromComponentCoordinates(textX, textY - 1, maxTextWidth, FontUtils.durman[13].getHeight() + 2);
-        FontUtils.durman[13].drawLeftAligned(ctx.pose(), text, textX - offset, textY, Color.WHITE.getRGB());
+        FontUtils.durman[13].drawLeftAligned(ctx.pose(), text, textX - offset, textY, ColorUtil.getMenuText());
         Scissor.pop();
 
         FontUtils.iconsWex[24].centeredDraw(ctx.pose(), "H", x + width - 25, y + HEIGHT / 2f - 6, Color.WHITE.getRGB());

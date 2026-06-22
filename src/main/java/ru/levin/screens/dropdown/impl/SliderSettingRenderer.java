@@ -8,6 +8,7 @@ import ru.levin.modules.setting.SliderSetting;
 import ru.levin.screens.dropdown.DescriptionRenderQueue;
 import ru.levin.screens.dropdown.SettingRenderer;
 import ru.levin.manager.fontManager.FontUtils;
+import ru.levin.util.color.ColorUtil;
 import ru.levin.util.render.RenderUtil;
 
 import java.awt.*;
@@ -39,14 +40,14 @@ public class SliderSettingRenderer implements SettingRenderer<SliderSetting>, IM
         int targetProgressWidth = (int) (barWidth * progress);
 
         if (setting.circlePos == -1) setting.circlePos = targetProgressWidth;
-        setting.circlePos += (targetProgressWidth - setting.circlePos) * 0.2;
+        setting.circlePos = ru.levin.util.math.MathUtil.lerp((float)setting.circlePos, (float)targetProgressWidth, 15f);
 
         RenderUtil.drawRoundedRect(ctx.pose(), barX, barY, (int) setting.circlePos, BAR_HEIGHT, 1, Manager.STYLE_MANAGER.getFirstColor());
 
-        FontUtils.durman[13].drawLeftAligned(ctx.pose(), setting.getName(), x + PADDING, y + 2, Color.WHITE.getRGB());
+        FontUtils.durman[13].drawLeftAligned(ctx.pose(), setting.getName(), x + PADDING, y + 2, ColorUtil.getMenuText());
         String valueText = formatValue(roundedValue, increment);
         int valueWidth = (int) FontUtils.durman[13].getWidth(valueText);
-        FontUtils.durman[13].drawLeftAligned(ctx.pose(), valueText, x + width - valueWidth - PADDING, y + 2, Color.WHITE.getRGB());
+        FontUtils.durman[13].drawLeftAligned(ctx.pose(), valueText, x + width - valueWidth - PADDING, y + 2, ColorUtil.getMenuText());
         
         if (setting.dragging) {
             setting.circleScale += SCALE_STEP;

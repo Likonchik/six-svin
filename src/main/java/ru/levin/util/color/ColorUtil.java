@@ -103,6 +103,38 @@ public class ColorUtil implements IMinecraft {
         return getColorHud((int) index, (int) alpha);
     }
 
+    // относительная яркость цвета (sRGB luminance, 0..1)
+    public static double luminance(int rgb) {
+        int r = (rgb >> 16) & 0xFF;
+        int g = (rgb >> 8) & 0xFF;
+        int b = rgb & 0xFF;
+        return (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255.0;
+    }
+
+    // тема «светлая», если оба её цвета яркие — тогда текст цветом темы нечитаем и его красят в чёрный
+    public static boolean isLightTheme() {
+        StyleManager theme = Manager.STYLE_MANAGER;
+        if (theme == null || theme.getTheme() == null) return false;
+        return (luminance(theme.getFirstColor()) + luminance(theme.getSecondColor())) * 0.5 > 0.7;
+    }
+
+    // цвет темы для ТЕКСТА: на светлой теме возвращает чёрный (читаемость), иначе обычный градиент темы
+    public static int getTextStyle(float index) {
+        return isLightTheme() ? 0xFF000000 : getColorStyle(index);
+    }
+    public static int getTextStyle(float index, float alpha) {
+        return isLightTheme() ? rgba(0, 0, 0, (int) alpha) : getColorStyle(index, alpha);
+    }
+
+    // основной текст меню: чёрный на светлой теме (читаемость), иначе белый
+    public static int getMenuText() {
+        return isLightTheme() ? 0xFF000000 : 0xFFFFFFFF;
+    }
+    // вторичный текст меню (счётчики/значения/неактивные): тёмно-серый на светлой теме, иначе светло-серый
+    public static int getMenuTextDim() {
+        return isLightTheme() ? 0xFF505050 : 0xFFB4B4B4;
+    }
+
     public static int getColorHud(int index) {
         StyleManager theme = Manager.STYLE_MANAGER;
         Color upColor = new Color(theme.getFirstColor());

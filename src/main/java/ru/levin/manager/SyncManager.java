@@ -54,7 +54,12 @@ public class SyncManager implements IMinecraft {
         }
 
         var accessor = (ClientPlayerEntityAccessor) player;
-        float lastYaw = accessor.getLastYaw();
+        
+        boolean spinbotVisual = true;
+        if (Manager.FUNCTION_MANAGER.spinbot != null && Manager.FUNCTION_MANAGER.spinbot.state && !Manager.FUNCTION_MANAGER.spinbot.visualRender.get()) {
+            spinbotVisual = false;
+        }
+        float lastYaw = spinbotVisual ? accessor.getLastYaw() : player.getYRot();
 
         if (player.attackAnim > 0.0f) {
             offset = lastYaw;
@@ -85,8 +90,14 @@ public class SyncManager implements IMinecraft {
                 }
                 visualPrevHeadYaw = visualHeadYaw;
                 visualPrevHeadPitch = visualHeadPitch;
-                visualHeadYaw = em.getYaw();
-                visualHeadPitch = em.getPitch();
+                
+                boolean spinbotVisual = true;
+                if (Manager.FUNCTION_MANAGER.spinbot != null && Manager.FUNCTION_MANAGER.spinbot.state && !Manager.FUNCTION_MANAGER.spinbot.visualRender.get()) {
+                    spinbotVisual = false;
+                }
+                
+                visualHeadYaw = spinbotVisual ? em.getYaw() : mc.player.getYRot();
+                visualHeadPitch = spinbotVisual ? em.getPitch() : mc.player.getXRot();
 
                 visualPrevBodyYaw = visualBodyYaw;
                 visualBodyYaw = getBodyYaw();

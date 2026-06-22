@@ -2,6 +2,7 @@ package ru.levin.modules.combat;
 
 import net.minecraft.client.Camera;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.network.protocol.game.ServerboundPlayerCommandPacket;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
@@ -109,6 +110,11 @@ public class GunAimbot extends Function {
     private final SliderSetting triggerFov = new SliderSetting("Порог наведения", 3f, 0.5f, 30f, 0.5f, () -> autoFire.get() && fireMode.is("По цели"));
     private final BooleanSetting triggerVisibleOnly = new BooleanSetting("Только видимых (огонь)", true, () -> autoFire.get() && fireMode.is("По цели"));
     private final SliderSetting triggerDelay = new SliderSetting("Задержка огня", 0f, 0f, 300f, 10f, () -> autoFire.get());
+    // TACZ блокит выстрел во время спринта: LocalPlayerShoot.shoot() -> IS_SPRINTING, пока getSynSprintTime()>0.
+    // Серверный sprintTimeS (макс = gunData.sprintTime, дефолт 0.2с) копится пока спринтишь и убывает в реальном
+    // времени, когда НЕ спринтишь -> на агро-пике автоогонь молчит. Гасим спринт, пока автоогонь наведён, чтобы
+    // таймер успел убыть к выстрелу. Образец — AttackAura (STOP_SPRINTING + setSprinting(false)).
+    private final BooleanSetting noSprintFire = new BooleanSetting("Гасить спринт для огня", true, () -> this.autoFire.get());
 
     private LivingEntity target = null;
     private boolean aiming = false;
@@ -120,6 +126,9 @@ public class GunAimbot extends Function {
     // ротацией). Иначе shoot-пакет уходит из tick() HEAD раньше move-пакета и сервер берёт ротацию прошлого
     // тика -> первый выстрел (особенно SEMI/DMR) летит в перекрестие, а не в цель. См. flushPendingShot().
     private boolean pendingShot = false;
+    // баллистика, посчитанная на tick HEAD; финальный solve откладывается до EventMotion (после движения),
+    // где состояние игрока (bulletOrigin/getDeltaMovement) совпадает с серверной точкой рождения пули.
+    private float[] pendingBallistics = null;
     private Vec3 lastAimAt = null;      // мировая точка, куда реально наведён аим (с упреждением) — для хитчанса
     private final java.util.ArrayDeque<Vec3> backHistory = new java.util.ArrayDeque<>(); // бэктрек: позиции цели
     private int historyEntityId = -1;
@@ -128,7 +137,7 @@ public class GunAimbot extends Function {
     public GunAimbot() {
         addSettings(targets, teamCheck, mode, point, sort, sticky, switchFov, fov, range, smooth, predictFactor, moveComp, drop, zeroSpread,
                 visibleOnly, visiblePart, backtrack, backtrackMode, backtrackDelay, humanize, humanGcd,
-                autoFire, fireMode, hitchance, hitChanceMin, triggerFov, triggerVisibleOnly, triggerDelay,
+                autoFire, fireMode, hitchance, hitChanceMin, triggerFov, triggerVisibleOnly, triggerDelay, noSprintFire,
                 fovCircle, circleColor, hue, saturation, brightness, alpha);
     }
 
@@ -143,20 +152,27 @@ public class GunAimbot extends Function {
         if (player == null || player.isDeadOrDying()) {
             aiming = false;
             target = null;
+            pendingBallistics = null;
             return;
         }
 
         if (event instanceof EventUpdate) {
             tick(player);
         } else if (event instanceof EventMotion motion) {
-            if (aiming) {
-                motion.setYaw(curYaw);
-                motion.setPitch(curPitch);
-            }
+            // Финальный solve выполняется ЗДЕСЬ — на HEAD sendPosition, т.е. ПОСЛЕ super.tick()/движения этого
+            // тика. На этот момент bulletOrigin() и getDeltaMovement() уже соответствуют текущему тику — ровно
+            // тому состоянию игрока, из которого сервер родит EntityKineticBullet (half-step origin + наследование
+            // скорости стрелка). Раньше solve шёл на tick HEAD (ДО движения) -> точка вылета отставала на один тик
+            // скорости стрелка, давая боковой снос при стрейфе/пике (мисс в атаке, точность в позиционке).
+            aimOnMotion(player, motion);
         }
     }
 
+    // tick HEAD (EventUpdate): выбор цели, история бэктрека, гейты состояния и баллистика. Сам геометрический
+    // solve + сглаживание + триггер отложены до EventMotion (aimOnMotion), где состояние игрока уже пост-движение
+    // и совпадает с точкой рождения пули на сервере. pendingBallistics != null = «цель готова, целимся в EventMotion».
     private void tick(LocalPlayer player) {
+        pendingBallistics = null;
         if (!hasGunInHand()) {
             aiming = false;
             target = null;
@@ -186,13 +202,23 @@ public class GunAimbot extends Function {
         }
         target = t;
         recordHistory(t);
+        pendingBallistics = ballistics;
+    }
 
-        float[] rot = computeAim(player, t, ballistics[0], ballistics[1], ballistics[2]);
+    // Финальное наведение — считается на EventMotion (после движения этого тика). На этот момент состояние игрока
+    // (bulletOrigin/getDeltaMovement) идентично тому, из которого сервер заспавнит EntityKineticBullet, поэтому
+    // решённый угол точен и при движении (стрейф/пик), а не только в покое. aiming выставляется ДО того, как
+    // Spinbot (Movement, обрабатывает тот же EventMotion позже по списку) прочитает isLocked() и уступит аиму.
+    private void aimOnMotion(LocalPlayer player, EventMotion motion) {
+        if (pendingBallistics == null || target == null) {
+            aiming = false;
+            return;
+        }
+        float[] rot = computeAim(player, target, pendingBallistics[0], pendingBallistics[1], pendingBallistics[2]);
         if (rot == null) {
             aiming = false;
             return;
         }
-
         if (!aiming) {
             curYaw = player.getYRot();
             curPitch = player.getXRot();
@@ -200,7 +226,22 @@ public class GunAimbot extends Function {
         stepToward(rot[0], rot[1]);
         aiming = true;
         lastRot = rot;
+        motion.setYaw(curYaw);
+        motion.setPitch(curPitch);
+        // режим "По цели": гасим спринт, пока наведены, чтобы серверный sprintTimeS убыл к моменту выстрела
+        // ("Всегда" гасит в fireAlways — там цели/сходимости нет).
+        if (autoFire.get() && !fireMode.is("Всегда")) killSprintForFire(player);
         tryAutoFire(player);
+    }
+
+    // Гасит спринт, пока автоогонь хочет стрелять. TACZ shoot() отклоняет выстрел (IS_SPRINTING), пока серверный
+    // getSynSprintTime()>0; этот таймер убывает только когда игрок НЕ спринтит, поэтому шлём STOP_SPRINTING заранее
+    // и каждый тик наведения (после первого тика isSprinting=false -> спам прекращается сам). Восстановление спринта
+    // не форсим: как только перестаём целиться, спринт вернёт сам игрок / AutoSprint.
+    private void killSprintForFire(LocalPlayer player) {
+        if (!noSprintFire.get() || !player.isSprinting()) return;
+        player.connection.send(new ServerboundPlayerCommandPacket(player, ServerboundPlayerCommandPacket.Action.STOP_SPRINTING));
+        player.setSprinting(false);
     }
 
     @Override
@@ -212,6 +253,7 @@ public class GunAimbot extends Function {
         firedThisHold = false;
         alignedSinceMs = 0L;
         pendingShot = false;
+        pendingBallistics = null;
         super.onDisable();
     }
 
@@ -810,6 +852,7 @@ public class GunAimbot extends Function {
     // быстрый полуавтомат — ровно то, что ожидается от AutoFire.
     private void fireAlways(LocalPlayer player) {
         if (!hasAmmo()) return;
+        killSprintForFire(player); // режим "Всегда": гасим спринт, пока есть патроны (см. killSprintForFire)
         long delay = (long) triggerDelay.get().floatValue();
         long now = System.currentTimeMillis();
         if (delay > 0L && now - alignedSinceMs < delay) return;

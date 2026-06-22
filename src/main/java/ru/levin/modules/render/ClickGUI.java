@@ -16,6 +16,7 @@ import java.util.Arrays;
 @FunctionAnnotation(name = "ClickGUI" ,desc  = "Управление/Кастомизация GUI", type = Type.Render, key = GLFW.GLFW_KEY_RIGHT_SHIFT)
 public class ClickGUI extends Function {
     public final ModeSetting colorGUI = new ModeSetting("Тема","Светло-чёрная","Светло-чёрная","Тёмная").withDesc("Цветовая тема меню");
+    public final ModeSetting animationMode = new ModeSetting("Анимация открытия", "Scale", "Scale", "Fade", "Slide").withDesc("Тип анимации появления меню");
 
     public final SliderSetting alpha = new SliderSetting("Прозрачность",200f,120f,255f,1f).withDesc("Прозрачность фона меню");
     public final BooleanSetting blur = new BooleanSetting("Размытие",true, "Размытие фона за меню");
@@ -31,7 +32,7 @@ public class ClickGUI extends Function {
     public final SliderSetting alphaModules = new SliderSetting("Прозрачность модулей",20f,10f,40f,1f,() -> strike.get() || filling.get()).withDesc("Прозрачность фона модулей");
 
     public ClickGUI() {
-        addSettings(colorGUI,alpha,blur,blurSetting,strike,filling,rounding,alphaModules);
+        addSettings(colorGUI,animationMode,alpha,blur,blurSetting,strike,filling,rounding,alphaModules);
     }
 
     public Color getGuiColor() {

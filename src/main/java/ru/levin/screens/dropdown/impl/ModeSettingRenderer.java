@@ -58,7 +58,7 @@ public class ModeSettingRenderer implements SettingRenderer<ModeSetting>, IMinec
         double mouseX = mc.mouseHandler.xpos() / mc.getWindow().getGuiScale();
         double mouseY = mc.mouseHandler.ypos() / mc.getWindow().getGuiScale();
 
-        FontUtils.durman[13].drawLeftAligned(ctx.pose(), setting.getName(), x, y, Color.WHITE.getRGB());
+        FontUtils.durman[13].drawLeftAligned(ctx.pose(), setting.getName(), x, y, ColorUtil.getMenuText());
 
         int startX = x + START_X_OFFSET;
         int spacing = 4;

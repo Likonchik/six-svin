@@ -65,7 +65,7 @@ public class BooleanSettingRenderer implements SettingRenderer<BooleanSetting>, 
 
         Scissor.push();
         Scissor.setFromComponentCoordinates(x, textY - 1, maxTextWidth, font.getHeight() + 2);
-        font.drawLeftAligned(ctx.pose(), text, x - offset, textY, Color.WHITE.getRGB());
+        font.drawLeftAligned(ctx.pose(), text, x - offset, textY, ColorUtil.getMenuText());
         Scissor.pop();
 
 

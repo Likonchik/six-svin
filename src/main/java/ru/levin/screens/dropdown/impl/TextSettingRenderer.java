@@ -5,6 +5,7 @@ import org.lwjgl.glfw.GLFW;
 import ru.levin.modules.setting.TextSetting;
 import ru.levin.screens.dropdown.SettingRenderer;
 import ru.levin.manager.fontManager.FontUtils;
+import ru.levin.util.color.ColorUtil;
 import ru.levin.util.render.RenderUtil;
 import ru.levin.util.render.Scissor;
 
@@ -28,7 +29,7 @@ public class TextSettingRenderer implements SettingRenderer<TextSetting> {
         int fontSizeField = 13;
 
         int nameHeight = (int) FontUtils.durman[fontSizeName].getHeight();
-        FontUtils.durman[fontSizeName].drawLeftAligned(ctx.pose(), setting.getName(), x + PADDING, y, Color.WHITE.getRGB());
+        FontUtils.durman[fontSizeName].drawLeftAligned(ctx.pose(), setting.getName(), x + PADDING, y, ColorUtil.getMenuText());
 
         String value = setting.getValue();
         int textWidth = (int) FontUtils.durman[fontSizeField].getWidth(value) + HORIZONTAL_PADDING * 2;

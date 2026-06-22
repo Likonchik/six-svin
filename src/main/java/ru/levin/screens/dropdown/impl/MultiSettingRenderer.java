@@ -58,12 +58,12 @@ public class MultiSettingRenderer implements SettingRenderer<MultiSetting>, IMin
         double mouseX = mc.mouseHandler.xpos() / mc.getWindow().getGuiScale();
         double mouseY = mc.mouseHandler.ypos() / mc.getWindow().getGuiScale();
 
-        FontUtils.durman[13].drawLeftAligned(ctx.pose(), setting.getName(), x, y, Color.WHITE.getRGB());
+        FontUtils.durman[13].drawLeftAligned(ctx.pose(), setting.getName(), x, y, ColorUtil.getMenuText());
 
         String counter = setting.getAllSelected() + "/" + setting.getAvailableModes().size();
 
         float counterWidth = FontUtils.durman[13].getWidth(counter);
-        FontUtils.durman[13].drawLeftAligned(ctx.pose(), counter, x + width - counterWidth - 2, y, new Color(180, 180, 180).getRGB());
+        FontUtils.durman[13].drawLeftAligned(ctx.pose(), counter, x + width - counterWidth - 2, y, ColorUtil.getMenuTextDim());
 
         int startX = x + START_X_OFFSET;
         int spacing = 4;

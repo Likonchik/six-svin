@@ -145,6 +145,8 @@ public class FunctionManager {
                 new NoWeb(),
                 spinbot = new Spinbot(),
                 new NoFall(),
+                new BulletDodge(),
+                new AntiPredict(),
                 //Player
                 guiWalk = new GuiWalk(),
                 new NoDelay(),

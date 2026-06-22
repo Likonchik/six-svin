@@ -1,5 +1,6 @@
 package ru.levin.modules.render;
 
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.projectile.Projectile;
@@ -10,6 +11,7 @@ import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import ru.levin.events.Event;
 import ru.levin.events.impl.EventUpdate;
+import ru.levin.events.impl.move.EventEntitySpawn;
 import ru.levin.events.impl.render.EventRender3D;
 import ru.levin.modules.Function;
 import ru.levin.modules.FunctionAnnotation;
@@ -76,41 +78,22 @@ public class BulletTracers extends Function {
     public void onEvent(Event event) {
         if (mc.player == null || mc.level == null) return;
 
+        if (event instanceof EventEntitySpawn ees) {
+            Entity e = ees.getEntity();
+            if (isBullet(e) && (!source.is("Только мои") || ownerIsLocal(e))) {
+                processBullet(e);
+            }
+        }
+
         if (event instanceof EventUpdate) {
             Set<Integer> alive = new HashSet<>();
             for (Entity e : mc.level.entitiesForRendering()) {
                 if (!isBullet(e)) continue;
                 if (source.is("Только мои") && !ownerIsLocal(e)) continue;
                 alive.add(e.getId());
-                Vec3 cur = new Vec3(e.getX(), e.getY(), e.getZ());
-                Trail tr = trails.get(e.getId());
-                if (tr == null) {
-                    // первая встреча: засеваем позицией прошлого тика (xOld), чтобы даже пуля, прожившая
-                    // 1 тик, дала видимый отрезок, а трасса начиналась у дула, а не на тик позже.
-                    tr = new Trail();
-                    trails.put(e.getId(), tr);
-                    Vec3 prev = new Vec3(e.xOld, e.yOld, e.zOld);
-                    if (prev.distanceToSqr(cur) > 1.0e-9) tr.points.addLast(prev);
-                }
-                if (tr.state == State.FLYING) {
-                    // не дублируем совпадающие точки — иначе нулевой сегмент даёт NaN-нормаль в drawLine
-                    if (tr.points.isEmpty() || tr.points.getLast().distanceToSqr(cur) > 1.0e-9) {
-                        tr.points.addLast(cur);
-                    }
-                    while (tr.points.size() > MAX_POINTS) tr.points.removeFirst();
-                    if (tr.points.size() >= 2) {
-                        Vec3 from = nthFromLast(tr, 1); // предпоследняя точка
-                        resolveSegment(tr, from, cur, e);
-                    }
-                    // прогноз на текущий тик: ловит близкие попадания у пуль, прожитых нами один кадр
-                    // (иначе трасса осталась бы из одной точки и не нарисовалась)
-                    if (tr.state == State.FLYING) {
-                        resolveLookahead(tr, cur, e.getDeltaMovement(), e);
-                    }
-                }
-                tr.last = System.currentTimeMillis();
+                processBullet(e);
             }
-            // пули, которых уже нет: незавершённые считаем промахом в воздух, затем чистим по linger состояния
+
             long now = System.currentTimeMillis();
             Iterator<Map.Entry<Integer, Trail>> it = trails.entrySet().iterator();
             while (it.hasNext()) {
@@ -118,8 +101,16 @@ public class BulletTracers extends Function {
                 Trail tr = en.getValue();
                 boolean live = alive.contains(en.getKey());
                 if (!live && tr.state == State.FLYING) {
-                    tr.state = State.MISS;
-                    if (!tr.points.isEmpty()) tr.impact = tr.points.getLast();
+                    if (tr.predictedImpact != null) {
+                        tr.state = tr.predictedState;
+                        tr.impact = tr.predictedImpact;
+                        if (tr.points.isEmpty() || tr.points.getLast().distanceToSqr(tr.impact) > 1.0e-9) {
+                            tr.points.addLast(tr.impact);
+                        }
+                    } else {
+                        tr.state = State.MISS;
+                        if (!tr.points.isEmpty()) tr.impact = tr.points.getLast();
+                    }
                 }
                 long keep = (long) ((tr.state == State.HIT || tr.state == State.HEADSHOT)
                         ? lingerHit.get().floatValue() : lingerMiss.get().floatValue());
@@ -127,19 +118,46 @@ public class BulletTracers extends Function {
             }
         }
 
-        if (event instanceof EventRender3D) {
+        if (event instanceof EventRender3D e3d) {
             boolean depth = !throughWalls.get();
             float w = width.get().floatValue();
-            for (Trail tr : trails.values()) {
-                if (tr.points.size() < 2) continue;
+            float partialTicks = e3d.getDeltatick().getGameTimeDeltaPartialTick(true);
+            
+            for (Map.Entry<Integer, Trail> entry : trails.entrySet()) {
+                Trail tr = entry.getValue();
+                if (tr.points.size() < 2 && tr.state != State.FLYING) continue;
+                
+                boolean isFlying = (tr.state == State.FLYING);
+                Entity bullet = isFlying ? mc.level.getEntity(entry.getKey()) : null;
+                Vec3 interp = null;
+                if (bullet != null) {
+                    interp = new Vec3(
+                        Mth.lerp(partialTicks, bullet.xo, bullet.getX()),
+                        Mth.lerp(partialTicks, bullet.yo, bullet.getY()),
+                        Mth.lerp(partialTicks, bullet.zo, bullet.getZ())
+                    );
+                }
+
                 Vec3 prev = null;
                 int i = 0, n = tr.points.size();
-                for (Vec3 p : tr.points) {
-                    if (prev != null && prev.distanceToSqr(p) > 1.0e-9)
-                        Render3DUtil.drawLine(prev, p, colorFor(tr.state, i, n), w, depth);
+                Iterator<Vec3> it = tr.points.iterator();
+                while (it.hasNext()) {
+                    Vec3 p = it.next();
+                    boolean isLast = !it.hasNext();
+                    
+                    if (isLast && interp != null) {
+                        p = interp;
+                    }
+                    
+                    if (prev != null && prev.distanceToSqr(p) > 1.0e-9) {
+                        int c1 = colorFor(tr.state, i - 1, n);
+                        int c2 = colorFor(tr.state, i, n);
+                        Render3DUtil.drawLine(null, prev, p, c1, c2, w, depth);
+                    }
                     prev = p;
                     i++;
                 }
+                
                 if (marker.get() && tr.impact != null) {
                     double s = markerSize.get().floatValue() / 2.0;
                     AABB box = new AABB(
@@ -151,17 +169,7 @@ public class BulletTracers extends Function {
         }
     }
 
-    // получить точку трассы, отстоящую на k от конца (k=0 — последняя, k=1 — предпоследняя)
-    private Vec3 nthFromLast(Trail tr, int k) {
-        int target = tr.points.size() - 1 - k;
-        int i = 0;
-        if (target < 0) return tr.points.getLast(); // out-of-range запрос — отдаём последнюю, без зацикливания
-        for (Vec3 p : tr.points) {
-            if (i == target) return p;
-            i++;
-        }
-        return tr.points.getLast();
-    }
+
 
     // одиночный raytrace отрезка: ближайший удар по сущности (HIT/HEADSHOT) ближе блока, иначе блок (MISS),
     // либо null если отрезок чист. Воспроизводит серверную коллизию TACZ на клиенте (ванильные API).
@@ -199,33 +207,10 @@ public class BulletTracers extends Function {
         return null; // чистый сегмент — остаёмся FLYING
     }
 
-    // резолв уже пройденного отрезка трассы: при ударе обрезаем последнюю точку ровно в точку импакта
-    private void resolveSegment(Trail tr, Vec3 from, Vec3 to, Entity bullet) {
-        Hit h = traceSegment(from, to, bullet);
-        if (h != null) {
-            tr.impact = h.pos();
-            tr.state = h.state();
-            replaceLast(tr, h.pos());
-        }
-    }
 
-    // прогноз на текущий тик (cur -> cur+скорость): при ударе ДОБАВляем точку импакта (cur — реальная точка).
-    // нужно, чтобы пуля, увиденная нами лишь раз (близкое попадание), всё равно дала отрезок [дуло, импакт].
-    private void resolveLookahead(Trail tr, Vec3 cur, Vec3 vel, Entity bullet) {
-        Hit h = traceSegment(cur, cur.add(vel), bullet);
-        if (h != null) {
-            tr.impact = h.pos();
-            tr.state = h.state();
-            if (tr.points.isEmpty() || tr.points.getLast().distanceToSqr(h.pos()) > 1.0e-9)
-                tr.points.addLast(h.pos());
-        }
-    }
 
     // заменить последнюю точку трассы (обрезка ровно в точке удара)
-    private void replaceLast(Trail tr, Vec3 p) {
-        if (!tr.points.isEmpty()) tr.points.removeLast();
-        tr.points.addLast(p);
-    }
+
 
     // ARGB цвета точки трассы: RGB по состоянию (FLYING рисуем как промах), alpha вдоль хвоста по fade
     private int colorFor(State state, int i, int n) {
@@ -241,7 +226,8 @@ public class BulletTracers extends Function {
             default: // MISS и FLYING
                 r = missR.get().intValue(); g = missG.get().intValue(); b = missB.get().intValue();
         }
-        int a = fade.get() ? (int) (255f * ((float) i / Math.max(1, n - 1))) : 255;
+        float progress = Math.max(0f, Math.min(1f, (float) i / Math.max(1, n - 1)));
+        int a = fade.get() ? (int) (255f * progress) : 255;
         return (a << 24) | ((r & 0xFF) << 16) | ((g & 0xFF) << 8) | (b & 0xFF);
     }
 
@@ -260,6 +246,36 @@ public class BulletTracers extends Function {
         return e instanceof Projectile p && p.getOwner() == mc.player;
     }
 
+    private void processBullet(Entity e) {
+        Vec3 cur = new Vec3(e.getX(), e.getY(), e.getZ());
+        Trail tr = trails.get(e.getId());
+        if (tr == null) {
+            tr = new Trail();
+            trails.put(e.getId(), tr);
+            Vec3 prev = new Vec3(e.xOld, e.yOld, e.zOld);
+            if (prev.distanceToSqr(cur) > 1.0e-9 && prev.distanceToSqr(cur) < 10000) {
+                tr.points.addLast(prev);
+            }
+        }
+        
+        tr.predictedState = State.FLYING;
+        tr.predictedImpact = null;
+
+        if (tr.state == State.FLYING) {
+            if (tr.points.isEmpty() || tr.points.getLast().distanceToSqr(cur) > 1.0e-9) {
+                tr.points.addLast(cur);
+            }
+            while (tr.points.size() > MAX_POINTS) tr.points.removeFirst();
+            
+            Hit h = traceSegment(cur, cur.add(e.getDeltaMovement()), e);
+            if (h != null) {
+                tr.predictedState = h.state();
+                tr.predictedImpact = h.pos();
+            }
+        }
+        tr.last = System.currentTimeMillis();
+    }
+
     @Override
     protected void onDisable() {
         trails.clear();
@@ -276,5 +292,7 @@ public class BulletTracers extends Function {
         long last;
         State state = State.FLYING;
         Vec3 impact = null;
+        State predictedState = State.FLYING;
+        Vec3 predictedImpact = null;
     }
 }

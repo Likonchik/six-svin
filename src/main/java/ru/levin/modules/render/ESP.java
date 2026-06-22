@@ -13,6 +13,7 @@ import ru.levin.modules.Function;
 import ru.levin.modules.FunctionAnnotation;
 import ru.levin.modules.Type;
 import ru.levin.modules.setting.BooleanSetting;
+import ru.levin.modules.setting.ModeSetting;
 import ru.levin.modules.setting.MultiSetting;
 import ru.levin.modules.setting.SliderSetting;
 import ru.levin.util.color.ColorUtil;
@@ -32,10 +33,10 @@ public class ESP extends Function {
             Arrays.asList("Игроков", "Друзей", "Меня"),
             new String[]{"Игроков", "Друзей", "Меня", "Предметы"}
     );
-    private final BooleanSetting hitbox = new BooleanSetting("Хитбокс", true);
-    private final BooleanSetting fill = new BooleanSetting("Заливка", true, () -> hitbox.get());
-    private final BooleanSetting throughWalls = new BooleanSetting("Сквозь стены", true, () -> hitbox.get());
-    private final SliderSetting width = new SliderSetting("Толщина линий", 1.5f, 0.5f, 4f, 0.1f);
+    private final ModeSetting boxMode = new ModeSetting("Тип бокса", "3D", "Нет", "3D", "Точный хитбокс").withDesc("Отображение позиции игрока");
+    private final BooleanSetting fill = new BooleanSetting("Заливка", true, () -> !boxMode.get().equals("Нет"));
+    private final BooleanSetting throughWalls = new BooleanSetting("Сквозь стены", true, () -> !boxMode.get().equals("Нет"));
+    private final SliderSetting width = new SliderSetting("Толщина линий", 1.5f, 0.5f, 4f, 0.1f, () -> !boxMode.get().equals("Нет"));
     private final BooleanSetting outlineModel = new BooleanSetting("Обводка модели", true);
     // красить ESP игрока в цвет его scoreboard-команды (если у команды задан цвет), иначе цвет темы
     private final BooleanSetting teamColor = new BooleanSetting("Цвет команды", true);
@@ -46,7 +47,7 @@ public class ESP extends Function {
 
     public ESP() {
         INSTANCE = this;
-        addSettings(targets, hitbox, fill, throughWalls, width, outlineModel, teamColor, hideTeam);
+        addSettings(targets, boxMode, fill, throughWalls, width, outlineModel, teamColor, hideTeam);
     }
 
     // ===== Цвет темы (общий для хитбокса и обводки) =====
@@ -69,7 +70,7 @@ public class ESP extends Function {
     @Override
     public void onEvent(Event event) {
         if (!(event instanceof EventRender3D e)) return;
-        if (mc.options.hideGui || !hitbox.get()) return;
+        if (mc.options.hideGui || boxMode.get().equals("Нет")) return;
 
         final float partial = e.getDeltatick().getGameTimeDeltaPartialTick(true);
         final boolean depth = !throughWalls.get();
@@ -98,7 +99,11 @@ public class ESP extends Function {
         AABB box = new AABB(
                 x + (local.minX - ent.getX()), y + (local.minY - ent.getY()), z + (local.minZ - ent.getZ()),
                 x + (local.maxX - ent.getX()), y + (local.maxY - ent.getY()), z + (local.maxZ - ent.getZ())
-        ).inflate(0.06);
+        );
+        
+        if (boxMode.get().equals("3D")) {
+            box = box.inflate(0.06);
+        }
 
         // Фрустум-кулинг: невидимое не буферим.
         if (!Render3DUtil.canSee(box)) return;

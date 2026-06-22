@@ -111,11 +111,27 @@ public class ColorUtil implements IMinecraft {
         return (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255.0;
     }
 
-    // тема «светлая», если оба её цвета яркие — тогда текст цветом темы нечитаем и его красят в чёрный
+    // тема «светлая» (текст красим в чёрный) ТОЛЬКО если оба цвета БЛЕДНЫЕ — близкие к белому/пастель.
+    // luminance не подходит: у зелёного огромный вес (~0.71), и насыщенная зелёная/циан/жёлтая тема ложно
+    // считалась светлой -> чёрный текст на цветном фоне = нечитаемо. Бледный = высокая яркость И низкая насыщенность.
     public static boolean isLightTheme() {
+        // ручной выбор цвета текста меню (модуль ClickGUI): Тёмный->чёрный, Светлый->белый, Авто->детект по теме
+        try {
+            ru.levin.modules.render.ClickGUI cg = Manager.FUNCTION_MANAGER != null ? Manager.FUNCTION_MANAGER.clickGUI : null;
+            if (cg != null) {
+                if (cg.textMode.is("Тёмный")) return true;
+                if (cg.textMode.is("Светлый")) return false;
+            }
+        } catch (Throwable ignored) {}
         StyleManager theme = Manager.STYLE_MANAGER;
         if (theme == null || theme.getTheme() == null) return false;
-        return (luminance(theme.getFirstColor()) + luminance(theme.getSecondColor())) * 0.5 > 0.7;
+        return isPale(theme.getFirstColor()) && isPale(theme.getSecondColor());
+    }
+
+    // бледный (почти белый/пастель): HSB brightness высокая, saturation низкая
+    private static boolean isPale(int rgb) {
+        float[] hsb = Color.RGBtoHSB((rgb >> 16) & 0xFF, (rgb >> 8) & 0xFF, rgb & 0xFF, null);
+        return hsb[2] > 0.82f && hsb[1] < 0.40f;
     }
 
     // цвет темы для ТЕКСТА: на светлой теме возвращает чёрный (читаемость), иначе обычный градиент темы

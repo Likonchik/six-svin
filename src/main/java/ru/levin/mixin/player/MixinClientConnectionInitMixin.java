@@ -41,6 +41,15 @@ public class MixinClientConnectionInitMixin {
             proxyManager.lastUsedProxy = new Proxy();
         }
 
-        proxyManager.proxyMenuButton.setMessage(Component.literal("Proxy: " + proxyManager.getLastUsedProxyIp()));
+        // proxyMenuButton создаётся только при открытии ванильного экрана Multiplayer
+        // (MultiplayerScreenMixin). Если на сервер заходят в обход этого экрана —
+        // например через очередь krutqueue (auto-connect с кастомного тайтл-скрина) —
+        // кнопка остаётся null. Раньше это бросало NPE прямо в Connection.initChannel,
+        // Netty закрывал канал, а ConnectScreen падал на getMessage()==null → вечное
+        // «Connecting to the world…». Обновление подписи кнопки чисто косметическое,
+        // поэтому просто гейтим его по null.
+        if (proxyManager.proxyMenuButton != null) {
+            proxyManager.proxyMenuButton.setMessage(Component.literal("Proxy: " + proxyManager.getLastUsedProxyIp()));
+        }
     }
 }

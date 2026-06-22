@@ -34,7 +34,7 @@ public abstract class MixinHeldItemRenderer {
     private void onEmptyHandViewModel(AbstractClientPlayer player, float tickDelta, float pitch, InteractionHand hand, float swingProgress, ItemStack item, float equipProgress, PoseStack matrices, MultiBufferSource vertexConsumers, int light, CallbackInfo ci) {
         if (!item.isEmpty()) return;
         ViewModel vm = Manager.FUNCTION_MANAGER.viewModel;
-        if (vm == null || !vm.state) return;
+        if (vm == null || !vm.handOn()) return;
         boolean right = (hand == InteractionHand.MAIN_HAND)
                 ? player.getMainArm() == HumanoidArm.RIGHT
                 : player.getMainArm().getOpposite() == HumanoidArm.RIGHT;

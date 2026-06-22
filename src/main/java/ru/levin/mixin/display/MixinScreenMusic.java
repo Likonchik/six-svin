@@ -20,6 +20,7 @@ public class MixinScreenMusic implements IMinecraft {
     private void onetap$musicPanel(GuiGraphics graphics, int mouseX, int mouseY, float partialTick, CallbackInfo ci) {
         try {
             if (Manager.FUNCTION_MANAGER == null) return;
+            if (mc.level != null) return;                 // в мире (пауза/инвентарь/чат/ClickGUI) панель НЕ рисуем
             if (mc.screen instanceof ru.levin.screens.musicplayer.MediaPlayerScreen) return; // меню само себя рисует
             MediaPlayer mp = Manager.FUNCTION_MANAGER.mediaPlayer;
             if (mp == null || !mp.hudVisible()) return;

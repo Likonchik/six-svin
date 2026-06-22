@@ -32,14 +32,14 @@ public class MixinApplyFirstPersonGunTransform {
                                               CallbackInfo ci) {
         try {
             ViewModel vm = (Manager.FUNCTION_MANAGER != null) ? Manager.FUNCTION_MANAGER.viewModel : null;
-            if (vm == null || !vm.state) return;
-            poseStack.translate(vm.right_x.get().floatValue(),
-                    vm.right_y.get().floatValue(),
-                    vm.right_z.get().floatValue());
-            poseStack.mulPose(Axis.XP.rotationDegrees(vm.right_rot_x.get().floatValue()));
-            poseStack.mulPose(Axis.YP.rotationDegrees(vm.right_rot_y.get().floatValue()));
-            poseStack.mulPose(Axis.ZP.rotationDegrees(vm.right_rot_z.get().floatValue()));
-            float s = vm.right_scale.get().floatValue();
+            if (vm == null || !vm.weaponOn()) return;          // отдельная группа «Оружие»
+            poseStack.translate(vm.gun_x.get().floatValue(),
+                    vm.gun_y.get().floatValue(),
+                    vm.gun_z.get().floatValue());
+            poseStack.mulPose(Axis.XP.rotationDegrees(vm.gun_rot_x.get().floatValue()));
+            poseStack.mulPose(Axis.YP.rotationDegrees(vm.gun_rot_y.get().floatValue()));
+            poseStack.mulPose(Axis.ZP.rotationDegrees(vm.gun_rot_z.get().floatValue()));
+            float s = vm.gun_scale.get().floatValue();
             poseStack.scale(s, s, s);
         } catch (Throwable ignored) {}
     }

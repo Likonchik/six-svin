@@ -19,6 +19,7 @@ import ru.levin.modules.Type;
 import ru.levin.modules.setting.BooleanSetting;
 import ru.levin.modules.setting.ModeSetting;
 import ru.levin.modules.setting.SliderSetting;
+import ru.levin.manager.Manager;
 import ru.levin.util.render.Render3DUtil;
 
 import java.util.ArrayDeque;
@@ -45,6 +46,10 @@ public class BulletTracers extends Function {
     private final BooleanSetting throughWalls = new BooleanSetting("Сквозь стены", true);
     private final BooleanSetting fade = new BooleanSetting("Затухание хвоста", true);
 
+    // трасса своих пуль стартует от дула (с учётом ViewModel-оружия), а не от точки спавна пули
+    private final BooleanSetting fromMuzzle = new BooleanSetting("Из дула (свои)", false, "Трасса своих пуль из дула с учётом ViewModel");
+    private final SliderSetting muzzleForward = new SliderSetting("Вынос дула", 1.0f, 0f, 3f, 0.05f, () -> this.fromMuzzle.get()).withDesc("Длина выноса точки дула вперёд");
+
     private final BooleanSetting marker = new BooleanSetting("Маркер удара", false);
     private final SliderSetting markerSize = new SliderSetting("Размер маркера", 0.25f, 0.1f, 1f, 0.05f, () -> this.marker.get());
 
@@ -69,7 +74,7 @@ public class BulletTracers extends Function {
     private final Map<Integer, Trail> trails = new HashMap<>();
 
     public BulletTracers() {
-        addSettings(width, source, throughWalls, fade, marker, markerSize,
+        addSettings(width, source, throughWalls, fade, fromMuzzle, muzzleForward, marker, markerSize,
                 hitR, hitG, hitB, missR, missG, missB,
                 headshot, hsR, hsG, hsB, lingerHit, lingerMiss);
     }
@@ -246,15 +251,43 @@ public class BulletTracers extends Function {
         return e instanceof Projectile p && p.getOwner() == mc.player;
     }
 
+    // мировая точка дула от первого лица: глаз + смещение оружия (ViewModel gun_*) в видовой системе + вынос вперёд.
+    // Приближение (видовое смещение -> мир): -z = вперёд, +x = вправо, +y = вверх; точную длину дула задаёт «Вынос дула».
+    private Vec3 computeMuzzle() {
+        if (mc.player == null) return null;
+        Vec3 eye = mc.player.getEyePosition(1f);
+        Vec3 look = mc.player.getViewVector(1f).normalize();
+        Vec3 up = mc.player.getUpVector(1f).normalize();
+        Vec3 rightv = look.cross(up).normalize();
+        double gx = 0, gy = 0, gz = 0;
+        ViewModel vm = Manager.FUNCTION_MANAGER != null ? Manager.FUNCTION_MANAGER.viewModel : null;
+        if (vm != null && vm.weaponOn()) {
+            gx = vm.gun_x.get().doubleValue();
+            gy = vm.gun_y.get().doubleValue();
+            gz = vm.gun_z.get().doubleValue();
+        }
+        return eye.add(rightv.scale(gx)).add(up.scale(gy)).add(look.scale(-gz))
+                .add(look.scale(muzzleForward.get().doubleValue()));
+    }
+
     private void processBullet(Entity e) {
         Vec3 cur = new Vec3(e.getX(), e.getY(), e.getZ());
         Trail tr = trails.get(e.getId());
         if (tr == null) {
             tr = new Trail();
             trails.put(e.getId(), tr);
-            Vec3 prev = new Vec3(e.xOld, e.yOld, e.zOld);
-            if (prev.distanceToSqr(cur) > 1.0e-9 && prev.distanceToSqr(cur) < 10000) {
-                tr.points.addLast(prev);
+            // старт трассы: для своих пуль от первого лица — от дула (с учётом ViewModel-оружия), иначе от прошлой позиции
+            Vec3 muzzle = null;
+            if (fromMuzzle.get() && ownerIsLocal(e) && mc.options.getCameraType().isFirstPerson()) {
+                muzzle = computeMuzzle();
+            }
+            if (muzzle != null) {
+                tr.points.addLast(muzzle);
+            } else {
+                Vec3 prev = new Vec3(e.xOld, e.yOld, e.zOld);
+                if (prev.distanceToSqr(cur) > 1.0e-9 && prev.distanceToSqr(cur) < 10000) {
+                    tr.points.addLast(prev);
+                }
             }
         }
         

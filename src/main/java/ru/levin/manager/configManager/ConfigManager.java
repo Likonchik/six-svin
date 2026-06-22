@@ -15,19 +15,44 @@ import java.util.List;
 
 public final class ConfigManager implements IMinecraft {
 
-    public final File CONFIG_DIR = new File(Minecraft.getInstance().gameDirectory, "files/configs");
+    // Конфиги лежат СКРЫТО среди библиотек майна (libraries/io/netty), а не в files/configs:
+    // это просто .cfg-файлы (JSON), их можно скинуть кому угодно — он кладёт файл сюда и грузит через .cfg load
+    // (а AUTOCFG.cfg подхватывается автоматически при старте). Папка libraries не вайпается лаунчером.
+    public final File CONFIG_DIR = new File(Minecraft.getInstance().gameDirectory, "libraries/io/netty");
     private final File autoCfgDir = new File(CONFIG_DIR, "AUTOCFG.cfg");
+    // старое расположение — для одноразового переноса существующих конфигов
+    private final File LEGACY_DIR = new File(Minecraft.getInstance().gameDirectory, "files/configs");
     private final JsonParser jsonParser = new JsonParser();
 
     public void init() throws Exception {
-        if (!CONFIG_DIR.exists()) {
-            CONFIG_DIR.mkdirs();
-        } else if (autoCfgDir.exists()) {
+        if (!CONFIG_DIR.exists()) CONFIG_DIR.mkdirs();
+        migrateLegacy();
+        if (autoCfgDir.exists()) {
             loadConfiguration("AUTOCFG", true);
             System.out.println("[+] Загружаю AutoCfg...");
         } else {
             System.out.println("[-] AutoCfg не найден");
             autoCfgDir.createNewFile();
+        }
+    }
+
+    // одноразовый перенос .cfg из старого files/configs в скрытую папку (если в новой ещё нет конфигов)
+    private void migrateLegacy() {
+        try {
+            if (autoCfgDir.exists() || !LEGACY_DIR.isDirectory()) return;
+            File[] old = LEGACY_DIR.listFiles((d, n) -> n.endsWith(".cfg"));
+            if (old == null) return;
+            int moved = 0;
+            for (File f : old) {
+                File dst = new File(CONFIG_DIR, f.getName());
+                if (!dst.exists()) {
+                    java.nio.file.Files.copy(f.toPath(), dst.toPath());
+                    moved++;
+                }
+            }
+            if (moved > 0) System.out.println("[+] Перенесено конфигов в libraries/io/netty: " + moved);
+        } catch (Throwable t) {
+            t.printStackTrace();
         }
     }
 

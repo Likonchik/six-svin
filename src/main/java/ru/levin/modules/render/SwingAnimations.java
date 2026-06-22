@@ -182,7 +182,7 @@ public class SwingAnimations extends Function {
                 boolean taczGun;
                 try { taczGun = !item.isEmpty() && com.tacz.guns.api.item.IGun.getIGunOrNull(item) != null; }
                 catch (Throwable ignored) { taczGun = false; }
-                if (viewModel.state && !taczGun) {
+                if (viewModel.handOn() && !taczGun) {
                     if (bl2) {
                         matrices.translate(viewModel.right_x.get().floatValue(), viewModel.right_y.get().floatValue(), viewModel.right_z.get().floatValue());
                         matrices.mulPose(Axis.XP.rotationDegrees(viewModel.right_rot_x.get().floatValue()));

@@ -38,6 +38,7 @@ public class ESP extends Function {
     private final BooleanSetting throughWalls = new BooleanSetting("Сквозь стены", true, () -> !boxMode.get().equals("Нет"));
     private final SliderSetting width = new SliderSetting("Толщина линий", 1.5f, 0.5f, 4f, 0.1f, () -> !boxMode.get().equals("Нет"));
     private final BooleanSetting outlineModel = new BooleanSetting("Обводка модели", true);
+    private final BooleanSetting modelFill = new BooleanSetting("Заливка модели", false, "Заливка силуэта модели (chams), а не хитбокса");
     // красить ESP игрока в цвет его scoreboard-команды (если у команды задан цвет), иначе цвет темы
     private final BooleanSetting teamColor = new BooleanSetting("Цвет команды", true);
     // вообще не рендерить игроков своей scoreboard-команды (союзников)
@@ -47,7 +48,7 @@ public class ESP extends Function {
 
     public ESP() {
         INSTANCE = this;
-        addSettings(targets, boxMode, fill, throughWalls, width, outlineModel, teamColor, hideTeam);
+        addSettings(targets, boxMode, fill, throughWalls, width, outlineModel, modelFill, teamColor, hideTeam);
     }
 
     // ===== Цвет темы (общий для хитбокса и обводки) =====
@@ -128,6 +129,8 @@ public class ESP extends Function {
 
     /** Должна ли сущность светиться (рендериться в outline-буфер) под нашу обводку. */
     public static boolean isOutlineTarget(Entity e) {
+        // техника SBW/VVP — контур модели независимо от состояния ESP (управляется SbwVehicleESP)
+        if (SbwVehicleESP.outlineModelEnabled() && ru.levin.util.sbw.SbwAccess.isVehicle(e)) return true;
         ESP esp = INSTANCE;
         if (esp == null || !esp.state || !esp.outlineModel.get()) return false;
         if (e instanceof Player p) return esp.shouldRender(p);
@@ -135,8 +138,26 @@ public class ESP extends Function {
         return false;
     }
 
+    /** Цвет заливки модели (chams) или 0, если сущность не цель заливки. Читается MixinEntityRenderDispatcher. */
+    public static int getFillColor(Entity e) {
+        // техника SBW/VVP — заливка силуэта модели (управляется SbwVehicleESP)
+        if (SbwVehicleESP.modelFillEnabled() && ru.levin.util.sbw.SbwAccess.isVehicle(e)) {
+            return SbwVehicleESP.fillColor(e);
+        }
+        // игроки — заливка модели по настройке ESP
+        ESP esp = INSTANCE;
+        if (esp != null && esp.state && esp.modelFill.get() && e instanceof Player p && esp.shouldRender(p)) {
+            return 0xB0000000 | (themeColor(e) & 0x00FFFFFF); // полупрозрачный тинт силуэта
+        }
+        return 0;
+    }
+
     /** Цвет обводки модели (из темы клиента / зелёный для друзей). */
     public static int getOutlineColor(Entity e) {
+        if (ru.levin.util.sbw.SbwAccess.isVehicle(e)) {
+            int c = SbwVehicleESP.outlineColor(e);
+            if (c != 0) return c;
+        }
         return themeColor(e);
     }
 }

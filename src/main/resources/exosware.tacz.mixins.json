@@ -10,7 +10,7 @@
 		"MixinCameraSetupEvent",
 		"MixinInteractKeyTextOverlay",
 		"MixinRenderCrosshairEvent",
-		"MixinGunItemRendererWrapper",
+		"MixinApplyFirstPersonGunTransform",
 		"MixinLocalPlayerAim",
 		"MixinFirstPersonRenderGunEvent",
 		"MixinBedrockAttachmentModel",

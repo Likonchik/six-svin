@@ -6,6 +6,7 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.item.ItemStack;
 import ru.levin.events.Event;
 import ru.levin.events.impl.EventUpdate;
+import ru.levin.manager.Manager;
 import ru.levin.modules.Function;
 import ru.levin.modules.FunctionAnnotation;
 import ru.levin.modules.Type;
@@ -35,6 +36,9 @@ public class GunNoSpread extends Function {
     private final ModeSetting mode = new ModeSetting("Режим", "Инстант", "Пинпоинт", "Инстант", "Легит");
     private final BooleanSetting hiddenAds = new BooleanSetting("Скрытый ADS", true, () -> mode.is("Легит"));
     private final BooleanSetting compSlow = new BooleanSetting("Компенсация замедления", false, () -> mode.is("Легит"));
+    // стелс: держать серверный aim ТОЛЬКО когда рядом есть цель (а не постоянно). Снижает сигнатуру АЧ
+    // «isAiming=true без визуального ADS», оставаясь near-zero spread в момент боя. По умолчанию выкл.
+    private final BooleanSetting onlyCombat = new BooleanSetting("Только в бою", false, () -> mode.is("Легит"));
     private final SliderSetting aimInterval = new SliderSetting("Интервал aim, тики", 20, 1, 100, 1, () -> mode.is("Легит"));
 
     // TACZ's aiming MOVEMENT_SPEED penalty modifier id — added server-side but SYNCED to the client
@@ -49,7 +53,7 @@ public class GunNoSpread extends Function {
     private net.minecraft.world.item.Item lastGun = null;
 
     public GunNoSpread() {
-        addSettings(mode, hiddenAds, compSlow, aimInterval);
+        addSettings(mode, hiddenAds, compSlow, onlyCombat, aimInterval);
     }
 
     // read by MixinInaccuracyType: force AIM inaccuracy without ever aiming (no slow / no FOV)
@@ -83,7 +87,7 @@ public class GunNoSpread extends Function {
         // "Легит": latch the real aim state on the server. Re-send on gun change AND on a periodic
         // heartbeat — switching weapons (or a server-side reset) clears the server's aiming state, so a
         // pure send-once-on-change would silently stop working until the module is toggled off/on.
-        if (mode.is("Легит") && hasGunInHand()) {
+        if (mode.is("Легит") && hasGunInHand() && (!onlyCombat.get() || hasCombatTarget())) {
             net.minecraft.world.item.Item gun = mc.player.getMainHandItem().getItem();
             boolean changed = gun != lastGun;
             lastGun = gun;
@@ -140,6 +144,30 @@ public class GunNoSpread extends Function {
             return !stack.isEmpty() && com.tacz.guns.api.item.IGun.getIGunOrNull(stack) != null;
         } catch (Throwable ignored) {
             return false;
+        }
+    }
+
+    // есть ли поблизости потенциальная цель: цель GunAimbot, иначе любая живая сущность в ~40 блоках.
+    // fail-open (true при ошибке) — чтобы не отключать near-zero spread из-за нештатной ситуации.
+    private boolean hasCombatTarget() {
+        try {
+            if (Manager.FUNCTION_MANAGER.gunAimbot != null
+                    && Manager.FUNCTION_MANAGER.gunAimbot.getTarget() != null) {
+                return true;
+            }
+            if (mc.level == null || mc.player == null) return false;
+            double r = 40.0;
+            for (net.minecraft.world.entity.Entity e : mc.level.entitiesForRendering()) {
+                if (e == mc.player) continue;
+                if (e instanceof net.minecraft.world.entity.decoration.ArmorStand) continue;
+                if (e instanceof net.minecraft.world.entity.LivingEntity le
+                        && le.isAlive() && mc.player.distanceTo(le) <= r) {
+                    return true;
+                }
+            }
+            return false;
+        } catch (Throwable ignored) {
+            return true;
         }
     }
 }

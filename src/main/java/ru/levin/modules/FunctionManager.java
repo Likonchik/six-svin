@@ -124,6 +124,7 @@ public class FunctionManager {
                 nameProtect = new NameProtect(),
                 noCommands = new NoCommands(),
                 antiScreenshot = new AntiScreenshot(),
+                new FakeLag(),
                 //Movement
                 blink = new Blink(),
                 phase = new Phase(),

@@ -36,6 +36,12 @@ run/
 # для сборки положи tacz-neoforge-1.21.1-1.1.8-hotfix-r1.jar обратно в libs/
 libs/
 
+# распакованные исходники TACZ для справки (624 МБ, не часть проекта)
+TACZ-1.21.1/
+
+# артефакты плагина superpowers (планы/спеки, не часть проекта)
+docs/superpowers/
+
 # java
 
 hs_err_*.log

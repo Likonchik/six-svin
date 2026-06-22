@@ -81,9 +81,15 @@ public class GunAimbot extends Function {
     private final BooleanSetting sticky = new BooleanSetting("Залипание на цели", true);
     private final SliderSetting switchFov = new SliderSetting("Порог смены цели", 8f, 0f, 30f, 0.5f, () -> sticky.get());
     private final BooleanSetting hitchance = new BooleanSetting("Хитчанс (умный огонь)", true, () -> this.autoFire.get());
+    // минимальный шанс попасть (Monte-Carlo по конусу разброса), ниже которого не стреляем
+    private final SliderSetting hitChanceMin = new SliderSetting("Мин. хитчанс, %", 60f, 0f, 100f, 1f, () -> this.autoFire.get() && this.hitchance.get());
     private final BooleanSetting humanize = new BooleanSetting("Человечность", false);
     private final BooleanSetting backtrack = new BooleanSetting("Бэктрек", false);
-    private final SliderSetting backtrackDelay = new SliderSetting("Бэктрек, тики", 3f, 1f, 10f, 1f, () -> backtrack.get());
+    // "Ручной" — фиксированное число тиков отмотки; "По пингу" — выводим из СВОЕГО пинга по формуле TACZ
+    // HitboxHelper (ping = floor(latency/1000*20+0.5)), чтобы целиться ровно в ту историческую позицию, в
+    // которую сервер откатывает хитбокс жертвы (лаг-компенсация). Пара к модулю FakeLag (раздув пинга).
+    private final ModeSetting backtrackMode = new ModeSetting(() -> backtrack.get(), "Бэктрек-режим", "Ручной", "Ручной", "По пингу");
+    private final SliderSetting backtrackDelay = new SliderSetting("Бэктрек, тики", 3f, 1f, 20f, 1f, () -> backtrack.get() && backtrackMode.is("Ручной"));
     private final BooleanSetting humanGcd = new BooleanSetting("Человечный GCD", true);
     private final BooleanSetting fovCircle = new BooleanSetting("Круг FOV", true);
 
@@ -121,8 +127,8 @@ public class GunAimbot extends Function {
 
     public GunAimbot() {
         addSettings(targets, teamCheck, mode, point, sort, sticky, switchFov, fov, range, smooth, predictFactor, moveComp, drop, zeroSpread,
-                visibleOnly, visiblePart, backtrack, backtrackDelay, humanize, humanGcd,
-                autoFire, fireMode, hitchance, triggerFov, triggerVisibleOnly, triggerDelay,
+                visibleOnly, visiblePart, backtrack, backtrackMode, backtrackDelay, humanize, humanGcd,
+                autoFire, fireMode, hitchance, hitChanceMin, triggerFov, triggerVisibleOnly, triggerDelay,
                 fovCircle, circleColor, hue, saturation, brightness, alpha);
     }
 
@@ -281,19 +287,39 @@ public class GunAimbot extends Function {
             historyEntityId = t.getId();
         }
         backHistory.addFirst(aimPoint(t)); // front = текущая позиция
-        while (backHistory.size() > 11) backHistory.removeLast();
+        while (backHistory.size() > 21) backHistory.removeLast(); // до 20 тиков отмотки (TACZ SAVE_TICK=20)
     }
 
     // позиция цели N тиков назад (front=текущая); null если истории не хватает
     private Vec3 backtrackPoint(LivingEntity t) {
         if (t.getId() != historyEntityId) return null;
-        int n = (int) backtrackDelay.get().floatValue();
-        if (backHistory.size() <= n) return null;
+        int n = backtrackTicks();
+        if (n < 1 || backHistory.size() <= n) return null;
         int i = 0;
         for (Vec3 v : backHistory) {
             if (i++ == n) return v;
         }
         return null;
+    }
+
+    // число тиков отмотки: ручное значение или выведенное из СВОЕГО пинга по формуле TACZ HitboxHelper
+    // (ping = floor(latency/1000*20 + 0.5)), клампим под серверный cap SAVE_TICK=20.
+    private int backtrackTicks() {
+        if (backtrackMode.is("пингу")) {
+            return Mth.clamp(pingTicks(), 1, 20);
+        }
+        return (int) backtrackDelay.get().floatValue();
+    }
+
+    private int pingTicks() {
+        try {
+            net.minecraft.client.multiplayer.PlayerInfo info =
+                    mc.getConnection().getPlayerInfo(mc.player.getUUID());
+            int latency = info != null ? info.getLatency() : 0;
+            return Mth.floor(latency / 1000.0 * 20.0 + 0.5);
+        } catch (Throwable ignored) {
+            return (int) backtrackDelay.get().floatValue();
+        }
     }
 
     // сглаженная per-tick скорость цели по backHistory (фронт=текущая); fallback на одну тиковую дельту.
@@ -373,34 +399,45 @@ public class GunAimbot extends Function {
         return new Vec3(c.x, y, c.z);
     }
 
-    // видимая точка прицеливания: голова если видна, иначе ближайшая к голове видимая точка тела. Плотный
-    // вертикальный проход голова->ноги (10 уровней) × {центр + 4 серединных края} — ловит и тонкую полоску
-    // тела, торчащую из-за угла. Выбираем видимую точку, ближайшую к голове (макс. урон / естественнее).
+    // видимая точка прицеливания: голова если видна, иначе ближайшая к голове видимая точка тела. Плотная
+    // сетка ПО ВСЕМ X/Z (3×3, ВКЛЮЧАЯ УГЛЫ) × тонкий вертикальный проход — ловит и узкий слой над укрытием,
+    // и УГЛОВОЕ выглядывание (старая «крест»-схема теряла углы хитбокса -> аим не видел торчащий угол).
+    // Найденную кромочную точку сдвигаем чуть ВНУТРЬ тела (запас под спред/квантование), если она видима.
     // null — если цель полностью перекрыта блоками: тогда аим не «втыкается» в стену.
     private Vec3 visibleAimPoint(LivingEntity t) {
         Vec3 head = aimPoint(t);
         if (canSee(head)) return head;
-        net.minecraft.world.phys.AABB box = t.getBoundingBox().deflate(0.08); // инсет от граней: грейзинг + хитрег
+        net.minecraft.world.phys.AABB box = t.getBoundingBox().deflate(0.03); // лёгкий инсет: точка внутри хитбокса, но тонкую кромку не теряем
         double cx = (box.minX + box.maxX) * 0.5;
         double cz = (box.minZ + box.maxZ) * 0.5;
-        // на каждом уровне: центр и 4 серединных края (не углы) — этого хватает на куски тела из-за угла
-        double[][] cols = {
-                {cx, cz}, {box.minX, cz}, {box.maxX, cz}, {cx, box.minZ}, {cx, box.maxZ}
-        };
+        double[] xs = {box.minX, cx, box.maxX}; // полная 3×3 сетка — углы хитбокса теперь сэмплируются
+        double[] zs = {box.minZ, cz, box.maxZ};
         Vec3 best = null;
         double bestDist = Double.MAX_VALUE;
-        final int steps = 9;
+        final int steps = 14; // тонкий вертикальный шаг — ловит узкий видимый слой тела над укрытием
         for (int i = 0; i <= steps; i++) {
             double y = box.maxY - (box.maxY - box.minY) * ((double) i / steps); // сверху (голова) вниз (ноги)
-            for (double[] c : cols) {
-                Vec3 p = new Vec3(c[0], y, c[1]);
-                if (!canSee(p)) continue;
-                double d = p.distanceToSqr(head);
-                if (d < bestDist) {
-                    bestDist = d;
-                    best = p;
+            for (double xx : xs) {
+                for (double zz : zs) {
+                    Vec3 p = new Vec3(xx, y, zz);
+                    if (!canSee(p)) continue;
+                    double d = p.distanceToSqr(head); // ближе к голове = больше урона / естественнее
+                    if (d < bestDist) {
+                        bestDist = d;
+                        best = p;
+                    }
                 }
             }
+        }
+        if (best == null) return null;
+        // запас под спред/квантование угла: тянем точку чуть ВНУТРЬ хитбокса (к центру), чтобы пуля била в
+        // тело, а не клипала кромку. Сдвинутую берём только если она тоже видима — иначе остаёмся на кромке.
+        Vec3 toCenter = box.getCenter().subtract(best);
+        if (toCenter.lengthSqr() > 1.0e-6) {
+            // 0.2 (было 0.13): глубже уводим точку от кромки силуэта = больше запас от угла укрытия под
+            // дроп/квантование. Берём только если inset тоже видим строгим canSee, иначе остаёмся на кромке.
+            Vec3 inset = best.add(toCenter.normalize().scale(0.2));
+            if (canSee(inset)) return inset;
         }
         return best;
     }
@@ -415,8 +452,12 @@ public class GunAimbot extends Function {
                 eye, point,
                 net.minecraft.world.level.ClipContext.Block.COLLIDER,
                 net.minecraft.world.level.ClipContext.Fluid.NONE, mc.player));
+        // блок на пути ДО точки = НЕ видно. Допуск 0.0025 (0.05 бл) только под deflate(0.03)/float-погрешность
+        // и точки, лежащие на поверхности (нога на полу, бок у стены — пуля там всё равно бьёт цель).
+        // Раньше допуск был 0.1 (0.316 бл): луч мог упереться в УГОЛ укрытия за ~0.1–0.3 бл до кромочной точки,
+        // но это считалось «видно» -> аим выбирал кромку силуэта на углу блока -> пуля клипала внутренний угол.
         return hr.getType() == net.minecraft.world.phys.HitResult.Type.MISS
-                || hr.getLocation().distanceToSqr(point) < 0.1;
+                || hr.getLocation().distanceToSqr(point) < 0.0025;
     }
 
     // хитчанс: чиста ли траектория пули (от точки вылета до РЕАЛЬНО наведённой точки, с упреждением/видимой
@@ -435,6 +476,87 @@ public class GunAimbot extends Function {
                 net.minecraft.world.level.ClipContext.Fluid.NONE, mc.player));
         return hr.getType() == net.minecraft.world.phys.HitResult.Type.MISS
                 || hr.getLocation().distanceToSqr(to) < 1.0;
+    }
+
+    // ===================== hitchance (Monte-Carlo) =====================
+
+    // вероятность попасть по цели текущим выстрелом, % [0..100]. Симулируем N выстрелов с РЕАЛЬНЫМ конусом
+    // разброса TACZ: дефолтные пушки используют ванильную Projectile.shoot -> triangle(±inacc·π/180) по осям
+    // нормализованного направления. Пускаем лучи от точки вылета и считаем долю, попавшую в хитбокс цели.
+    // Наш пинпоинт зануляет разброс -> лазер -> 100%.
+    private double hitChance(LocalPlayer player) {
+        if (target == null) return 0.0;
+        Vec3 origin = bulletOrigin(player);
+        Vec3 aimPt = lastAimAt != null ? lastAimAt : aimPoint(target);
+        Vec3 aim = aimPt.subtract(origin);
+        if (aim.lengthSqr() < 1.0e-6) return 0.0;
+        aim = aim.normalize();
+
+        double inacc = effectiveInaccuracyDeg(player); // градусы; 0 при пинпоинте
+        // тестируем по ПРЕДСКАЗАННОМУ хитбоксу: aim наведён на lastAimAt (с упреждением/бэктреком), поэтому
+        // двигаем текущий бокс на тот же вектор (lastAimAt − базовая точка цели), иначе по движущейся цели
+        // лучи вокруг упреждённого направления мажут мимо ТЕКУЩЕГО бокса -> хитчанс всегда ~0.
+        net.minecraft.world.phys.AABB box = target.getBoundingBox().move(aimPt.subtract(aimPoint(target)));
+        double range = origin.distanceTo(box.getCenter()) + 4.0;
+
+        // лазер (разброс ~0): попадание определяется одной центральной трассой
+        if (inacc <= 1.0e-4) {
+            Vec3 end = origin.add(aim.scale(range));
+            return box.clip(origin, end).isPresent() ? 100.0 : 0.0;
+        }
+
+        final int n = 100;
+        final double sigma = 0.0172275 * inacc; // (π/180)·inacc — как в Projectile.shoot
+        int hits = 0;
+        for (int i = 0; i < n; i++) {
+            Vec3 d = new Vec3(aim.x + tri(sigma), aim.y + tri(sigma), aim.z + tri(sigma));
+            if (d.lengthSqr() < 1.0e-6) continue;
+            Vec3 end = origin.add(d.normalize().scale(range));
+            if (box.clip(origin, end).isPresent()) hits++;
+        }
+        return 100.0 * hits / n;
+    }
+
+    // треугольное распределение ±s (как RandomSource.triangle(0, s) в ваниле): s·(rand − rand)
+    private double tri(double s) {
+        return s * (rng.nextDouble() - rng.nextDouble());
+    }
+
+    // эффективный разброс пули в ГРАДУСАХ с учётом наших модулей: наш пинпоинт (свой zeroSpread или GunNoSpread
+    // «Пинпоинт») -> 0; «Инстант» форсит тип AIM. Значение — из gun INACCURACY-карты по текущему InaccuracyType
+    // (как у TACZ на сервере), фоллбэк на дефолты типа (STAND=5, MOVE=5.75, SNEAK=3.5, LIE=2.5, AIM=0.15).
+    private double effectiveInaccuracyDeg(LocalPlayer player) {
+        try {
+            boolean pinpoint = wantsZeroSpread()
+                    || (Manager.FUNCTION_MANAGER.gunNoSpread != null
+                        && Manager.FUNCTION_MANAGER.gunNoSpread.forcePinpoint());
+            if (pinpoint) return 0.0;
+
+            boolean forceAim = Manager.FUNCTION_MANAGER.gunNoSpread != null
+                    && Manager.FUNCTION_MANAGER.gunNoSpread.forceAimSpread();
+            com.tacz.guns.resource.pojo.data.gun.InaccuracyType type = forceAim
+                    ? com.tacz.guns.resource.pojo.data.gun.InaccuracyType.AIM
+                    : com.tacz.guns.resource.pojo.data.gun.InaccuracyType.getInaccuracyType(player);
+
+            Float v = null;
+            try {
+                com.tacz.guns.resource.modifier.AttachmentCacheProperty cache =
+                        com.tacz.guns.api.entity.IGunOperator.fromLivingEntity(player).getCacheProperty();
+                if (cache != null) {
+                    java.util.Map<com.tacz.guns.resource.pojo.data.gun.InaccuracyType, Float> map =
+                            cache.getCache(com.tacz.guns.api.GunProperties.INACCURACY);
+                    if (map != null) v = map.get(type);
+                }
+            } catch (Throwable ignored) {}
+            if (v == null) {
+                java.util.Map<com.tacz.guns.resource.pojo.data.gun.InaccuracyType, Float> def =
+                        com.tacz.guns.resource.pojo.data.gun.InaccuracyType.getDefaultInaccuracy();
+                if (def != null) v = def.get(type);
+            }
+            return v != null ? Math.max(0.0, v) : 5.0;
+        } catch (Throwable ignored) {
+            return 5.0;
+        }
     }
 
     // ===================== ballistics =====================
@@ -662,8 +784,12 @@ public class GunAimbot extends Function {
         // прогрев упреждения: не стрелять по движущейся цели, пока окно сглаживания скорости не набралось
         // (иначе первые выстрелы уходят с лидом от шумной одно-тиковой скорости). Стоячую не задерживаем.
         if (target != null && !predictionReady(target)) return;
-        // хитчанс: не стрелять, если пулю по траектории перекрывает блок
-        if (hitchance.get() && !bulletPathClear(player)) return;
+        // хитчанс: симулируем конус разброса и не стреляем, если шанс попасть ниже порога. Блок на
+        // центральном пути = разом 0 (быстрый гейт до симуляции).
+        if (hitchance.get()) {
+            if (!bulletPathClear(player)) return;
+            if (hitChance(player) < hitChanceMin.get().doubleValue()) return;
+        }
 
         long delay = (long) triggerDelay.get().floatValue();
         if (delay > 0L) {

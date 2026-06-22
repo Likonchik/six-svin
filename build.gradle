@@ -71,8 +71,22 @@ dependencies {
 	}
 	implementation('dev.arbjerg:lavaplayer:' + project.lavaplayer_version, lavaExcludes)
 	implementation('dev.lavalink.youtube:v2:' + project.youtube_source_version, lavaExcludes)
-	jarJar('dev.arbjerg:lavaplayer:' + project.lavaplayer_version) { transitive = true; exclude group: 'org.apache.httpcomponents'; exclude group: 'commons-io'; exclude group: 'commons-logging'; exclude group: 'commons-codec'; exclude group: 'org.slf4j'; exclude group: 'org.apache.logging.log4j' }
-	jarJar('dev.lavalink.youtube:v2:' + project.youtube_source_version) { transitive = true; exclude group: 'org.apache.httpcomponents'; exclude group: 'commons-io'; exclude group: 'commons-logging'; exclude group: 'commons-codec'; exclude group: 'org.slf4j'; exclude group: 'org.apache.logging.log4j' }
+	// jarJar (NeoForge jar-in-jar) does NOT expand transitives here (transitive=true is a no-op on this
+	// config — verified via `gradle dependencies --configuration jarJar`). So embed the FULL lavaplayer +
+	// youtube-source closure explicitly, each pinned to an exact version range. MC-provided libs
+	// (httpclient/commons/slf4j/log4j) are deliberately NOT listed (MC supplies them; bundling = split-package crash).
+	jarJar('dev.arbjerg:lavaplayer:[2.2.6]') { transitive = false }
+	jarJar('dev.arbjerg:lavaplayer-natives:[2.2.6]') { transitive = false }
+	jarJar('dev.arbjerg:lava-common:[2.2.6]') { transitive = false }
+	jarJar('dev.lavalink.youtube:v2:[1.18.1]') { transitive = false }
+	jarJar('dev.lavalink.youtube:common:[1.18.1]') { transitive = false }
+	jarJar('org.mozilla:rhino-engine:[1.7.15]') { transitive = false }
+	jarJar('org.mozilla:rhino:[1.7.15]') { transitive = false }
+	jarJar('org.jsoup:jsoup:[1.16.1]') { transitive = false }
+	jarJar('org.json:json:[20240303]') { transitive = false }
+	jarJar('com.fasterxml.jackson.core:jackson-core:[2.15.2]') { transitive = false }
+	jarJar('com.fasterxml.jackson.core:jackson-databind:[2.15.2]') { transitive = false }
+	jarJar('com.fasterxml.jackson.core:jackson-annotations:[2.15.2]') { transitive = false }
 	// ModDevGradle STRIPS jarJar from the dev run classpath -> put lava deps on every run's classpath so they load in runClient.
 	additionalRuntimeClasspath('dev.arbjerg:lavaplayer:' + project.lavaplayer_version, lavaExcludes)
 	additionalRuntimeClasspath('dev.lavalink.youtube:v2:' + project.youtube_source_version, lavaExcludes)

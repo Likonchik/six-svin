@@ -39,6 +39,11 @@ neoForge {
 	}
 }
 
+configurations {
+	// resolvable bag for the lavaplayer/youtube closure that gets MERGED into the mod jar (NOT jar-in-jar)
+	musicBundle { canBeResolved = true; canBeConsumed = false }
+}
+
 dependencies {
 	// SOCKS/proxy codecs (were Loom include(...) on Fabric). On compile classpath...
 	implementation 'io.netty:netty-handler-proxy:4.1.82.Final'
@@ -71,22 +76,13 @@ dependencies {
 	}
 	implementation('dev.arbjerg:lavaplayer:' + project.lavaplayer_version, lavaExcludes)
 	implementation('dev.lavalink.youtube:v2:' + project.youtube_source_version, lavaExcludes)
-	// jarJar (NeoForge jar-in-jar) does NOT expand transitives here (transitive=true is a no-op on this
-	// config — verified via `gradle dependencies --configuration jarJar`). So embed the FULL lavaplayer +
-	// youtube-source closure explicitly, each pinned to an exact version range. MC-provided libs
-	// (httpclient/commons/slf4j/log4j) are deliberately NOT listed (MC supplies them; bundling = split-package crash).
-	jarJar('dev.arbjerg:lavaplayer:[2.2.6]') { transitive = false }
-	jarJar('dev.arbjerg:lavaplayer-natives:[2.2.6]') { transitive = false }
-	jarJar('dev.arbjerg:lava-common:[2.2.6]') { transitive = false }
-	jarJar('dev.lavalink.youtube:v2:[1.18.1]') { transitive = false }
-	jarJar('dev.lavalink.youtube:common:[1.18.1]') { transitive = false }
-	jarJar('org.mozilla:rhino-engine:[1.7.15]') { transitive = false }
-	jarJar('org.mozilla:rhino:[1.7.15]') { transitive = false }
-	jarJar('org.jsoup:jsoup:[1.16.1]') { transitive = false }
-	jarJar('org.json:json:[20240303]') { transitive = false }
-	jarJar('com.fasterxml.jackson.core:jackson-core:[2.15.2]') { transitive = false }
-	jarJar('com.fasterxml.jackson.core:jackson-databind:[2.15.2]') { transitive = false }
-	jarJar('com.fasterxml.jackson.core:jackson-annotations:[2.15.2]') { transitive = false }
+	// MediaPlayer libs CANNOT be NeoForge jar-in-jar: youtube-source v2/common split-package
+	// (dev.lavalink.youtube.clients.skeleton) and the lava stack isn't JPMS-modular -> the module layer
+	// rejects them as separate modules (ResolutionException at boot). Instead the FULL closure (resolved
+	// transitively here, minus MC-provided libs via lavaExcludes) is MERGED into the onetap mod jar by the
+	// `jar` task below -> one module, no cross-jar split, native/resource loading untouched (no relocation).
+	musicBundle('dev.arbjerg:lavaplayer:' + project.lavaplayer_version, lavaExcludes)
+	musicBundle('dev.lavalink.youtube:v2:' + project.youtube_source_version, lavaExcludes)
 	// ModDevGradle STRIPS jarJar from the dev run classpath -> put lava deps on every run's classpath so they load in runClient.
 	additionalRuntimeClasspath('dev.arbjerg:lavaplayer:' + project.lavaplayer_version, lavaExcludes)
 	additionalRuntimeClasspath('dev.lavalink.youtube:v2:' + project.youtube_source_version, lavaExcludes)
@@ -120,4 +116,19 @@ tasks.named('processResources', ProcessResources).configure {
 	filesMatching('META-INF/neoforge.mods.toml') {
 		expand replaceProperties
 	}
+}
+
+// Merge the lavaplayer/youtube-source closure FLAT into the mod jar (instead of jar-in-jar). One module =
+// no JPMS split-package (the v2/common skeleton split + non-modular lava stack would otherwise crash module
+// resolution at boot). No relocation -> lavaplayer's native/resource lookups by package path keep working.
+tasks.named('jar') {
+	from({ configurations.musicBundle.collect { it.isDirectory() ? it : zipTree(it) } }) {
+		exclude 'module-info.class'
+		exclude 'META-INF/versions/**/module-info.class'
+		exclude 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA', 'META-INF/*.EC'
+		exclude 'META-INF/MANIFEST.MF'
+		exclude 'META-INF/maven/**'
+		exclude 'LICENSE', 'LICENSE.txt', 'NOTICE', 'NOTICE.txt'
+	}
+	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }

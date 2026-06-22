@@ -102,6 +102,11 @@ public class BulletTracers extends Function {
                         Vec3 from = nthFromLast(tr, 1); // предпоследняя точка
                         resolveSegment(tr, from, cur, e);
                     }
+                    // прогноз на текущий тик: ловит близкие попадания у пуль, прожитых нами один кадр
+                    // (иначе трасса осталась бы из одной точки и не нарисовалась)
+                    if (tr.state == State.FLYING) {
+                        resolveLookahead(tr, cur, e.getDeltaMovement(), e);
+                    }
                 }
                 tr.last = System.currentTimeMillis();
             }
@@ -158,21 +163,20 @@ public class BulletTracers extends Function {
         return tr.points.getLast();
     }
 
-    // воспроизводим серверную коллизию на клиенте: блок-клип + перебор сущностей вдоль отрезка.
-    // ближайший удар (сущность ближе блока -> HIT/HEADSHOT, иначе блок -> MISS) обрезает трассу.
-    private void resolveSegment(Trail tr, Vec3 from, Vec3 to, Entity bullet) {
+    // одиночный raytrace отрезка: ближайший удар по сущности (HIT/HEADSHOT) ближе блока, иначе блок (MISS),
+    // либо null если отрезок чист. Воспроизводит серверную коллизию TACZ на клиенте (ванильные API).
+    private Hit traceSegment(Vec3 from, Vec3 to, Entity bullet) {
+        if (from.distanceToSqr(to) < 1.0e-9) return null;
         // 1) блоки
         BlockHitResult bhr = mc.level.clip(new ClipContext(from, to,
                 ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, bullet));
-        double dBlock = (bhr.getType() != HitResult.Type.MISS) ? from.distanceToSqr(bhr.getLocation()) : Double.MAX_VALUE;
+        double bestDist = (bhr.getType() != HitResult.Type.MISS) ? from.distanceToSqr(bhr.getLocation()) : Double.MAX_VALUE;
 
         // 2) сущности вдоль отрезка, но не дальше блочного удара
         LivingEntity bestEntity = null;
         Vec3 bestHit = null;
-        double bestDist = dBlock;
         AABB segBox = new AABB(from, to).inflate(0.5);
-        List<Entity> near = mc.level.getEntities(bullet, segBox);
-        for (Entity ent : near) {
+        for (Entity ent : mc.level.getEntities(bullet, segBox)) {
             if (!(ent instanceof LivingEntity le)) continue;
             if (le == mc.player && ownerIsLocal(bullet)) continue; // не цепляем стрелка-себя
             Optional<Vec3> hit = le.getBoundingBox().inflate(0.3).clip(from, to);
@@ -186,16 +190,35 @@ public class BulletTracers extends Function {
         }
 
         if (bestEntity != null) {
-            tr.impact = bestHit;
             boolean head = bestHit.y > bestEntity.getY() + bestEntity.getBbHeight() * 0.85;
-            tr.state = head ? State.HEADSHOT : State.HIT;
-            replaceLast(tr, bestHit);
-        } else if (dBlock != Double.MAX_VALUE) {
-            tr.impact = bhr.getLocation();
-            tr.state = State.MISS;
-            replaceLast(tr, bhr.getLocation());
+            return new Hit(bestHit, head ? State.HEADSHOT : State.HIT);
         }
-        // иначе чистый сегмент — остаёмся FLYING
+        if (bhr.getType() != HitResult.Type.MISS) {
+            return new Hit(bhr.getLocation(), State.MISS);
+        }
+        return null; // чистый сегмент — остаёмся FLYING
+    }
+
+    // резолв уже пройденного отрезка трассы: при ударе обрезаем последнюю точку ровно в точку импакта
+    private void resolveSegment(Trail tr, Vec3 from, Vec3 to, Entity bullet) {
+        Hit h = traceSegment(from, to, bullet);
+        if (h != null) {
+            tr.impact = h.pos();
+            tr.state = h.state();
+            replaceLast(tr, h.pos());
+        }
+    }
+
+    // прогноз на текущий тик (cur -> cur+скорость): при ударе ДОБАВляем точку импакта (cur — реальная точка).
+    // нужно, чтобы пуля, увиденная нами лишь раз (близкое попадание), всё равно дала отрезок [дуло, импакт].
+    private void resolveLookahead(Trail tr, Vec3 cur, Vec3 vel, Entity bullet) {
+        Hit h = traceSegment(cur, cur.add(vel), bullet);
+        if (h != null) {
+            tr.impact = h.pos();
+            tr.state = h.state();
+            if (tr.points.isEmpty() || tr.points.getLast().distanceToSqr(h.pos()) > 1.0e-9)
+                tr.points.addLast(h.pos());
+        }
     }
 
     // заменить последнюю точку трассы (обрезка ровно в точке удара)
@@ -244,6 +267,9 @@ public class BulletTracers extends Function {
     }
 
     private enum State { FLYING, MISS, HIT, HEADSHOT }
+
+    // результат raytrace одного отрезка: точка удара + его тип
+    private record Hit(Vec3 pos, State state) {}
 
     private static final class Trail {
         final ArrayDeque<Vec3> points = new ArrayDeque<>();
